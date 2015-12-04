@@ -15,7 +15,11 @@ Stores the credentials for accessing the ScienceLogic EM7 API in-memory
 and tests the connection to the web service.
 
 ### SYNTAX
-    Connect-EM7 [<CommonParameters>]
+    Connect-EM7 [-URI] <System.Uri> [<CommonParameters>]
+
+### PARAMETERS
+#### -URI <System.Uri>
+The API root URL.
 
 ***
 
