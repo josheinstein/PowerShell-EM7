@@ -3,9 +3,9 @@ PowerShell cmdlets that wrap the ScienceLogic EM7 REST API.
 
 ## Usage
 
-Import-Module ScienceLogic   # Load the module
-Connect-EM7                  # Prompts for login/pass
-Get-EM7Device -Limit 10      # Gets 10 devices in the system
+    Import-Module ScienceLogic   # Load the module
+    Connect-EM7                  # Prompts for login/pass
+    Get-EM7Device -Limit 10      # Gets 10 devices in the system
 
 ***
 
