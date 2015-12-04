@@ -4,15 +4,10 @@
 #
 # AUTHOR
 # Josh Einstein
-#
-# LICENSE
-# Creative Commons License Deed 
-# Attribution-NonCommercial-ShareAlike 2.5
-# http://creativecommons.org/licenses/by-sa/3.0/us/
 ##############################################################################
 
 $Globals = @{
-    ApiRoot         = [Uri]'https://em7.linesystems.com/api/'
+    ApiRoot         = $Null
     Credentials     = $Null
     FormatResponse  = $true
     HideFilterInfo  = 1
@@ -22,6 +17,7 @@ $Globals = @{
 
 if (Test-Path $Globals.CredentialPath) {
     $Globals.Credentials = Import-Clixml $Globals.CredentialPath -ErrorAction 0
+    $Globals.ApiRoot = $Globals.Credentials.URI
 }
 
 ##############################################################################
@@ -39,14 +35,21 @@ function Connect-EM7 {
     [OutputType([PSObject])]
     [CmdletBinding()]
     param(
+
+        # The API root URI
+        [Parameter(Position=1, Mandatory=$true)]
+        [Uri]$URI
+
     )
 
     if (Test-Path $Globals.CredentialPath) { Remove-Item $Globals.CredentialPath }
 
+    $Globals.ApiRoot = $URI
     $Globals.Credentials = Get-Credential -Message 'Enter your ScienceLogic API credentials.'
+    $Globals.Credentials | Add-Member NoteProperty URI $URI
 
     # Will throw not-authorized if the credentials are invalid
-    HttpGet $Globals.ApiRoot | Out-Null
+    HttpGet $URI | Out-Null
 
     $Globals.Credentials | Export-Clixml $Globals.CredentialPath
 
