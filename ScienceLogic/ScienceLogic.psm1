@@ -10,7 +10,7 @@ $Globals = @{
     ApiRoot         = $Null
     Credentials     = $Null
     FormatResponse  = $true
-    HideFilterInfo  = 1
+    HideFilterInfo  = 0
     DefaultLimit    = 1000
     CredentialPath  = "${ENV:TEMP}\slcred.xml"
 }
@@ -131,6 +131,15 @@ function Find-EM7Object {
         [Parameter()]
         [Int32]$Offset = 0,
 
+        # Optionally sorts the results by this field in ascending order, or if
+        # the field is prefixed with a dash (-) in descending order.
+        # You can also pipe the output to PowerShell's Sort-Object cmdlet, but
+        # this parameter is processed on the server, which will affect how
+        # results are paginated when there are more results than fit in a
+        # single page.
+        [Parameter()]
+        [String]$OrderBy,
+
         # Specifies one or more property names that ordinarily contain a link
         # to a related object to automatically retrieve and place in the 
         # returned object.
@@ -145,10 +154,11 @@ function Find-EM7Object {
         Limit = $Limit
         Offset = $Offset
         Extended = $true
+        OrderBy = $OrderBy
     }
 
     $URI = CreateUri @UriArgs
-    $Result = HttpGet $URI
+    $Result = HttpGet $URI | UnrollArray
     if ($ExpandProperty.Length) {
         $Cache = @{}
         foreach ($Obj in @($Result)) {
@@ -187,6 +197,15 @@ function Get-EM7Device {
         # 100 for page 2, 200 for page 3, and so on.
         [Parameter()]
         [Int32]$Offset = 0,
+
+        # Optionally sorts the results by this field in ascending order, or if
+        # the field is prefixed with a dash (-) in descending order.
+        # You can also pipe the output to PowerShell's Sort-Object cmdlet, but
+        # this parameter is processed on the server, which will affect how
+        # results are paginated when there are more results than fit in a
+        # single page.
+        [Parameter()]
+        [String]$OrderBy,
 
         # Specifies one or more property names that ordinarily contain a link
         # to a related object to automatically retrieve and place in the 
@@ -234,6 +253,15 @@ function Get-EM7Organization {
         # 100 for page 2, 200 for page 3, and so on.
         [Parameter()]
         [Int32]$Offset = 0,
+
+        # Optionally sorts the results by this field in ascending order, or if
+        # the field is prefixed with a dash (-) in descending order.
+        # You can also pipe the output to PowerShell's Sort-Object cmdlet, but
+        # this parameter is processed on the server, which will affect how
+        # results are paginated when there are more results than fit in a
+        # single page.
+        [Parameter()]
+        [String]$OrderBy,
 
         # Specifies one or more property names that ordinarily contain a link
         # to a related object to automatically retrieve and place in the 
@@ -295,7 +323,16 @@ function CreateUri {
         # The keys in this hashtable will be prefixed with 'filter.' and appended
         # to the query string for filtering on resource indexes.
         [Parameter()]
-        [Hashtable]$Filter
+        [Hashtable]$Filter,
+
+        # Optionally sorts the results by this field in ascending order, or if
+        # the field is prefixed with a dash (-) in descending order.
+        # You can also pipe the output to PowerShell's Sort-Object cmdlet, but
+        # this parameter is processed on the server, which will affect how
+        # results are paginated when there are more results than fit in a
+        # single page.
+        [Parameter()]
+        [String]$OrderBy
 
     )
 
@@ -305,6 +342,10 @@ function CreateUri {
     if ($Extended) { $Query['extended_fetch'] = 1 }
     if ($Limit) { $Query['limit'] = $Limit }
     if ($Offset) { $Query['offset'] = $Offset }
+    if ($OrderBy) {
+        if ($OrderBy -like '-*') { $Query["order.$($OrderBy.Substring(1))"] = 'DESC' }
+        else { $Query["order.$OrderBy"] = 'ASC' }
+    }
 
     foreach ($Name in $Filter.Keys) {
         $Query["filter.$Name"] = $Filter[$Name]
@@ -330,10 +371,14 @@ function UnrollArray {
 
         # The objects whose properties are to be enumerated and unrolled
         # into an array of those properties' values.
-        [Parameter(Position=1)]
+        [Parameter(Position=1, ValueFromPipeline=$true)]
         [PSObject]$InputObject
 
     )
+
+    if ($InputObject.result_set) {
+        $InputObject = $InputObject.result_set
+    }
 
     $UriKeys = @($InputObject | Get-Member -Name '/api/*' | Select -ExpandProperty Name)
     if ($UriKeys.Count) {
@@ -417,7 +462,7 @@ function ExpandProperty {
             # First check the cache
             if (!$Cache[$URI]) {
                 # Not there? Go get it.
-                $Cache[$URI] = HttpGet (%New-Uri $URI -BaseUri $Globals.ApiRoot -QueryString @{extended_fetch=1})
+                $Cache[$URI] = HttpGet (%New-Uri $URI -BaseUri $Globals.ApiRoot -QueryString @{extended_fetch=1}) | UnrollArray
             }
 
             $InputObject.$P = $Cache[$URI]
@@ -477,7 +522,6 @@ function HttpGet {
         [String]$JSON = $ResponseReader.ReadToEnd()
 
         $Result = ConvertFrom-Json $JSON
-        $Result = UnrollArray $Result
 
         Return $Result
 
