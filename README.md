@@ -11,8 +11,8 @@ PowerShell cmdlets that wrap the ScienceLogic EM7 REST API.
 
 ## Connect-EM7
 ### SYNOPSIS
-Stores the credentials for accessing the ScienceLogic EM7 API in-memory
-and tests the connection to the web service.
+Stores the credentials for accessing the ScienceLogic EM7 API in an encrypted file
+in the temp directory and tests the connection to the web service.
 
 ### SYNTAX
     Connect-EM7 [-URI] <System.Uri> [<CommonParameters>]
