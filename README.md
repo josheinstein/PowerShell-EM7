@@ -9,140 +9,93 @@ PowerShell cmdlets that wrap the ScienceLogic EM7 REST API.
 
 ***
 
-## Connect-EM7
-### SYNOPSIS
+## Connect-EM7 
 Stores the credentials for accessing the ScienceLogic EM7 API in-memory
-and tests the connection to the web service.
+and tests the connection to the web service. 
 
-### SYNTAX
-    Connect-EM7 [-URI] <System.Uri> [<CommonParameters>]
+### Syntax 
 
-### PARAMETERS
-#### -URI <System.Uri>
-The API root URL.
+    Connect-EM7 [-URI] <Uri> [<CommonParameters>] 
 
-***
+### Outputs 
+System.Management.Automation.PSObject 
 
-## Find-EM7Object
-### SYNOPSIS
+*** 
+
+## Find-EM7Object 
 Queries the specified resource index for resources matching an optional
-filter specification.
+filter specification. 
 
-### SYNTAX
-    Find-EM7Object [-Resource] <String> [-Filter <Hashtable>] [-Limit <Int32>] 
-                   [-Offset <Int32>] [-ExpandProperty <String[]>]
-                   [<CommonParameters>]
+### Syntax 
 
-### PARAMETERS
-#### -Resource <string>
-The name of the resource index to query.
-See the documentation for value values.
-Examples include, device, device_group, organization, account...
+    Find-EM7Object [-Resource] <String> [-Filter <Hashtable>] [-Limit <Int32>]  
+                   [-Offset <Int32>] [-ExpandProperty <String[]>] [<CommonParameters>] 
 
-#### -Filter <hashtable>
-If specifieed, the keys of this hashtable are prefixed with
-'filter.' and used as filters. For example: @{organization=6}
+Parameter | Required | Pos  | Description 
+--------- | :------: | ---: | ----------- 
+*Resource* | X | 2 | The name of the resource index to query. See the documentation for value values. Examples include, device, device_group, organization, account... 
+*Filter* |  |  | If specifieed, the keys of this hashtable are prefixed with &#39;filter.&#39; and used as filters. For example: @{organization=6} 
+*Limit* |  |  | Limits the results to the specified number. The default is 1000. 
+*Offset* |  |  | The starting offset in the results to return. If retrieving objects in pages of 100, you would specify 0 for page 1, 100 for page 2, 200 for page 3, and so on. 
+*ExpandProperty* |  |  | Specifies one or more property names that ordinarily contain a link to a related object to automatically retrieve and place in the  returned object. 
 
-#### -Limit <int32>
-Limits the results to the specified number. The default is 1000.
+*** 
 
-#### -Offset <int32>
-The starting offset in the results to return.
-If retrieving objects in pages of 100, you would specify 0 for page 1,
-100 for page 2, 200 for page 3, and so on.
+## Get-EM7Object 
+Retrieves a specific EM7 object by its ID. 
 
-#### -ExpandProperty <string[]>
-Specifies one or more property names that ordinarily contain a link
-to a related object to automatically retrieve and place in the
-returned object.
+### Syntax 
 
-***
+    Get-EM7Object [-Resource] <String> [-ID] <Int32> [-ExpandProperty <String[]>]  
+                  [<CommonParameters>] 
 
-## Get-EM7Object
-### SYNOPSIS
-Retrieves a specific EM7 object by its ID.
+Parameter | Required | Pos  | Description 
+--------- | :------: | ---: | ----------- 
+*Resource* | X | 2 | The name of the resource index to query. See the documentation for value values. Examples include, device, device_group, organization, account... 
+*ID* | X | 3 | The ID of a specific entity to retrieve. 
+*ExpandProperty* |  |  | Specifies one or more property names that ordinarily contain a link to a related object to automatically retrieve and place in the  returned object. 
 
-### SYNTAX
-    Get-EM7Object [-Resource] <String> [-ID] <Int32> [-ExpandProperty <String[]>]
-                  [<CommonParameters>]
+*** 
 
-### PARAMETERS
-#### -Resource <string>
-The name of the resource index to query.
-See the documentation for value values.
-Examples include, device, device_group, organization, account...
+## Get-EM7Device 
+Get a ScienceLogic EM7 device entity. 
 
-#### -ID <int32>
-The ID of a specific entity to retrieve.
+### Syntax 
 
-#### -ExpandProperty <string[]>
-Specifies one or more property names that ordinarily contain a link
-to a related object to automatically retrieve and place in the
-returned object.
+    Get-EM7Device [-Filter <Hashtable>] [-Limit <Int32>] [-Offset <Int32>]  
+                  [-ExpandProperty <String[]>] [<CommonParameters>] 
 
-***
+    Get-EM7Device [-ID] <Int32> [-Limit <Int32>] [-Offset <Int32>] [-ExpandProperty  
+                  <String[]>] [<CommonParameters>] 
 
-## Get-EM7Device
-### SYNOPSIS
-Get a ScienceLogic EM7 device entity.
-### SYNTAX
-    Get-EM7Device [-Filter <Hashtable>] [-Limit <Int32>] [-Offset <Int32>]
-                  [-ExpandProperty <String[]>] [<CommonParameters>]
-    
-    Get-EM7Device [-ID] <Int32> [-Limit <Int32>] [-Offset <Int32>] 
-                  [-ExpandProperty <String[]>] [<CommonParameters>]
+Parameter | Required | Pos  | Description 
+--------- | :------: | ---: | ----------- 
+*ID* | X | 2 | If specified, retrieves the device with the specified ID 
+*Filter* |  |  | If specifieed, the keys of this hashtable are prefixed with &#39;filter.&#39; and used as filters. For example: @{organization=6} 
+*Limit* |  |  | Limits the results to the specified number. The default is 1000. 
+*Offset* |  |  | The starting offset in the results to return. If retrieving objects in pages of 100, you would specify 0 for page 1, 100 for page 2, 200 for page 3, and so on. 
+*ExpandProperty* |  |  | Specifies one or more property names that ordinarily contain a link to a related object to automatically retrieve and place in the  returned object. 
 
-### PARAMETERS
-#### -ID <int32>
-If specified, retrieves the device with the specified ID
+*** 
 
-#### -Filter <hashtable>
-If specifieed, the keys of this hashtable are prefixed with
-'filter.' and used as filters. For example: @{organization=6}
+## Get-EM7Organization 
+Get a ScienceLogic EM7 organization entity. 
 
-#### -Limit <int32>
-Limits the results to the specified number. The default is 1000.
+### Syntax 
 
-#### -Offset <int32>
-The starting offset in the results to return.
-If retrieving objects in pages of 100, you would specify 0 for page 1,
-100 for page 2, 200 for page 3, and so on.
+    Get-EM7Organization [-Filter <Hashtable>] [-Limit <Int32>] [-Offset <Int32>]  
+                        [-ExpandProperty <String[]>] [<CommonParameters>] 
 
-#### -ExpandProperty <string[]>
-Specifies one or more property names that ordinarily contain a link
-to a related object to automatically retrieve and place in the
-returned object.
+    Get-EM7Organization [-ID] <Int32> [-Limit <Int32>] [-Offset <Int32>]  
+                        [-ExpandProperty <String[]>] [<CommonParameters>] 
 
-***
+Parameter | Required | Pos  | Description 
+--------- | :------: | ---: | ----------- 
+*ID* | X | 2 | If specified, retrieves the organization with the specified ID 
+*Filter* |  |  | If specifieed, the keys of this hashtable are prefixed with &#39;filter.&#39; and used as filters. For example: @{state=&#39;PA&#39;} 
+*Limit* |  |  | Limits the results to the specified number. The default is 1000. 
+*Offset* |  |  | The starting offset in the results to return. If retrieving objects in pages of 100, you would specify 0 for page 1, 100 for page 2, 200 for page 3, and so on. 
+*ExpandProperty* |  |  | Specifies one or more property names that ordinarily contain a link to a related object to automatically retrieve and place in the  returned object. 
 
-## Get-EM7Organization
-### SYNOPSIS
-Get a ScienceLogic EM7 organization entity.
+*** 
 
-### SYNTAX
-    Get-EM7Organization [-Filter <hashtable>] [-Limit <int32>] [-Offset <int32>]
-                        [-ExpandProperty <string[]>] [<commonparameters>]
-    
-    Get-EM7Organization [-ID] <Int32> [-Limit <Int32>] [-Offset <Int32>] 
-                        [-ExpandProperty <String[]>] [<CommonParameters>]
-
-### PARAMETERS
-#### -ID <int32>
-If specified, retrieves the organization with the specified ID
-
-#### -Filter <Hashtable>
-If specifieed, the keys of this hashtable are prefixed with
-'filter.' and used as filters. For example: @{state='PA'}
-
-#### -Limit <Int32>
-Limits the results to the specified number. The default is 1000.
-
-#### -Offset <Int32>
-The starting offset in the results to return.
-If retrieving objects in pages of 100, you would specify 0 for page 1,
-100 for page 2, 200 for page 3, and so on.
-
-#### -ExpandProperty <String[]>
-Specifies one or more property names that ordinarily contain a link
-to a related object to automatically retrieve and place in the
-returned object.

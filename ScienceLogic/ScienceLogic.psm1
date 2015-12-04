@@ -32,7 +32,6 @@ if (Test-Path $Globals.CredentialPath) {
 ##############################################################################
 function Connect-EM7 {
 
-    [OutputType([PSObject])]
     [CmdletBinding()]
     param(
 
