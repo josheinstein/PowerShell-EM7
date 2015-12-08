@@ -81,6 +81,8 @@ function Get-EM7Object {
 
     )
 
+	EnsureConnected -ErrorAction Stop
+
     $UriArgs = @{
         ID = $ID
         Resource = $Resource
@@ -89,6 +91,13 @@ function Get-EM7Object {
     
     $URI = CreateUri @UriArgs
     $Result = HttpGet $URI
+
+	if ($URI.AbsolutePath -match '^(.*)/([A-Za-z0-9_\-\.]+)$') {
+		$Result | Add-Member -TypeName $Matches[1]
+		$Result | Add-Member NoteProperty __ID $Matches[2]
+		$Result | Add-Member NoteProperty __URI $URI.AbsolutePath
+	}
+
     if ($ExpandProperty.Length) {
         $Cache = @{}
         foreach ($Obj in @($Result)) {
@@ -147,6 +156,8 @@ function Find-EM7Object {
         [String[]]$ExpandProperty
 
     )
+
+	EnsureConnected -ErrorAction Stop
 
     $UriArgs = @{
         Resource = $Resource
@@ -382,7 +393,15 @@ function UnrollArray {
 
     $UriKeys = @($InputObject | Get-Member -Name '/api/*' | Select -ExpandProperty Name)
     if ($UriKeys.Count) {
-        $UriKeys | ForEach { Write-Output $InputObject.$_ }
+        $UriKeys | ForEach { 
+			$Item = $InputObject.$_ 
+			if ($_ -match '^(.*)/([A-Za-z0-9_\-\.]+)$') {
+				$Item | Add-Member -TypeName $Matches[1]
+				$Item | Add-Member NoteProperty __ID $Matches[2]
+				$Item | Add-Member NoteProperty __URI $_
+			}
+			Write-Output $Item
+		}
     }
     else {
         Write-Output $InputObject
@@ -473,6 +492,18 @@ function ExpandProperty {
 
 }
 
+##############################################################################
+#.SYNOPSIS
+# Checks to make sure that Connect-EM7 has been called. In other words, that
+# we have an API root and credentials. Does not verify credentials.
+##############################################################################
+function EnsureConnected {
+	
+	if (!$Globals.ApiRoot -or !$Globals.Credentials) {
+		Write-Error "Connect-EM7 must be called first."
+	}
+
+}
 
 ##############################################################################
 #.SYNOPSIS
