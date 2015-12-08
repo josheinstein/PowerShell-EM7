@@ -228,7 +228,7 @@ function Get-EM7Device {
 
     switch ($PSCmdlet.ParameterSetName) {
         'ID' {
-            Get-EM7Object device $ID
+            Get-EM7Object device @PSBoundParameters
         }
         'Advanced' {
             Find-EM7Object device @PSBoundParameters
@@ -284,7 +284,7 @@ function Get-EM7Organization {
 
     switch ($PSCmdlet.ParameterSetName) {
         'ID' {
-            Get-EM7Object organization $ID
+            Get-EM7Object organization @PSBoundParameters
         }
         'Advanced' {
             Find-EM7Object organization @PSBoundParameters
@@ -451,7 +451,11 @@ function ExpandProperty {
 
     if ($Cache -eq $Null) { $Cache  =@{} }
 
-    foreach ($P in $Property) {
+    foreach ($Prop in $Property) {
+
+		Write-Verbose "Expanding: $Prop"
+
+		$P,$S = $Prop -split '/'
 
         $URI = $Null
 
@@ -487,6 +491,11 @@ function ExpandProperty {
             $InputObject.$P = $Cache[$URI]
 
         }
+
+		# Are there subproperties to expand?
+		if ($S.Length) {
+			ExpandProperty ($InputObject.$P) ($S -join '/') -Cache:$Cache
+		}
 
     }
 
