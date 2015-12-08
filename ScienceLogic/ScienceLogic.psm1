@@ -93,8 +93,11 @@ function Get-EM7Object {
     $Result = HttpGet $URI
 
 	if ($URI.AbsolutePath -match '^(.*)/([A-Za-z0-9_\-\.]+)$') {
-		$Result | Add-Member -TypeName $Matches[1]
-		$Result | Add-Member NoteProperty __ID $Matches[2]
+		$TypeName = $Matches[1]
+		$ID = $Matches[2]
+		if ($ID -as [Int32]) { $ID = $ID -as [Int32] }
+		$Result | Add-Member -TypeName $TypeName
+		$Result | Add-Member NoteProperty __ID $ID
 		$Result | Add-Member NoteProperty __URI $URI.AbsolutePath
 	}
 
@@ -396,8 +399,11 @@ function UnrollArray {
         $UriKeys | ForEach { 
 			$Item = $InputObject.$_ 
 			if ($_ -match '^(.*)/([A-Za-z0-9_\-\.]+)$') {
-				$Item | Add-Member -TypeName $Matches[1]
-				$Item | Add-Member NoteProperty __ID $Matches[2]
+				$TypeName = $Matches[1]
+				$ID = $Matches[2]
+				if ($ID -as [Int32]) { $ID = $ID -as [Int32] }
+				$Item | Add-Member -TypeName $TypeName
+				$Item | Add-Member NoteProperty __ID $ID
 				$Item | Add-Member NoteProperty __URI $_
 			}
 			Write-Output $Item
