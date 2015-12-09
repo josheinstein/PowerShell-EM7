@@ -1,3 +1,5 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- See https://technet.microsoft.com/en-us/library/gg580944.aspx -->
 <Configuration>
     <ViewDefinitions>
         <View>
@@ -75,6 +77,94 @@
                                         default { $This.state } 
                                     }
                                 </ScriptBlock>
+                            </TableColumnItem>
+                        </TableColumnItems>
+                    </TableRowEntry>
+                </TableRowEntries>
+            </TableControl>
+        </View>
+        <View>
+            <Name>/api/organization</Name>
+            <ViewSelectedBy>
+                <TypeName>/api/organization</TypeName>
+            </ViewSelectedBy>
+            <TableControl>
+                <TableHeaders>
+                    <TableColumnHeader>
+                        <Label>ID</Label>
+                        <Width>8</Width>
+                        <Alignment>left</Alignment>
+                    </TableColumnHeader>
+                    <TableColumnHeader>
+                        <Label>Name</Label>
+                        <Width>20</Width>
+                        <Alignment>left</Alignment>
+                    </TableColumnHeader>
+                    <TableColumnHeader>
+                        <Label>Address</Label>
+                        <Width>20</Width>
+                        <Alignment>left</Alignment>
+                    </TableColumnHeader>
+                    <TableColumnHeader>
+                        <Label>City</Label>
+                        <Width>15</Width>
+                        <Alignment>left</Alignment>
+                    </TableColumnHeader>
+                    <TableColumnHeader>
+                        <Label>State</Label>
+                        <Width>6</Width>
+                        <Alignment>left</Alignment>
+                    </TableColumnHeader>
+                    <TableColumnHeader>
+                        <Label>ZIP</Label>
+                        <Width>6</Width>
+                        <Alignment>left</Alignment>
+                    </TableColumnHeader>
+                    <TableColumnHeader>
+                        <Label>Phone</Label>
+                        <Width>15</Width>
+                        <Alignment>left</Alignment>
+                    </TableColumnHeader>
+                    <TableColumnHeader>
+                        <Label>Billing ID</Label>
+                        <Width>10</Width>
+                        <Alignment>right</Alignment>
+                    </TableColumnHeader>
+                    <TableColumnHeader>
+                        <Label>CRM ID</Label>
+                        <Width>10</Width>
+                        <Alignment>right</Alignment>
+                    </TableColumnHeader>
+                </TableHeaders>
+                <TableRowEntries>
+                    <TableRowEntry>
+                        <TableColumnItems>
+                            <TableColumnItem>
+                                <PropertyName>__ID</PropertyName>
+                            </TableColumnItem>
+                            <TableColumnItem>
+                                <PropertyName>company</PropertyName>
+                            </TableColumnItem>
+                            <TableColumnItem>
+                                <PropertyName>address</PropertyName>
+                            </TableColumnItem>
+                            <TableColumnItem>
+                                <PropertyName>city</PropertyName>
+                            </TableColumnItem>
+                            <TableColumnItem>
+                                <PropertyName>state</PropertyName>
+                            </TableColumnItem>
+                            <TableColumnItem>
+                                <PropertyName>zip</PropertyName>
+                            </TableColumnItem>
+                            <TableColumnItem>
+                                <PropertyName>phone</PropertyName>
+                            </TableColumnItem>
+                            <TableColumnItem>
+                                <PropertyName>billing_id</PropertyName>
+                            </TableColumnItem>
+                            <TableColumnItem>
+                                <PropertyName>crm_id</PropertyName>
                             </TableColumnItem>
                         </TableColumnItems>
                     </TableRowEntry>
