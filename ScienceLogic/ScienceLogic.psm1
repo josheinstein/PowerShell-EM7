@@ -197,19 +197,24 @@ function Get-EM7Device {
         [Parameter(ParameterSetName='ID', Position=1, Mandatory=$true)]
         [Int32]$ID,
 
-        # If specifieed, the keys of this hashtable are prefixed with
+        # If specified, the keys of this hashtable are prefixed with
         # 'filter.' and used as filters. For example: @{organization=6}
         [Parameter(ParameterSetName='Advanced')]
         [Hashtable]$Filter,
 
+        # If specified, devices in the given organization are searched.
+        [Alias('__OrganizationID')]
+		[Parameter(ParameterSetName='Advanced', ValueFromPipelineByPropertyName=$true)]
+        [Int32[]]$Organization,
+
         # Limits the results to the specified number. The default is 1000.
-        [Parameter()]
+        [Parameter(ParameterSetName='Advanced')]
         [Int32]$Limit = $Globals.DefaultLimit,
 
         # The starting offset in the results to return.
         # If retrieving objects in pages of 100, you would specify 0 for page 1,
         # 100 for page 2, 200 for page 3, and so on.
-        [Parameter()]
+        [Parameter(ParameterSetName='Advanced')]
         [Int32]$Offset = 0,
 
         # Optionally sorts the results by this field in ascending order, or if
@@ -218,25 +223,35 @@ function Get-EM7Device {
         # this parameter is processed on the server, which will affect how
         # results are paginated when there are more results than fit in a
         # single page.
-        [Parameter()]
+        [Parameter(ParameterSetName='Advanced')]
         [String]$OrderBy,
 
         # Specifies one or more property names that ordinarily contain a link
         # to a related object to automatically retrieve and place in the 
         # returned object.
         [Parameter()]
-        [String[]]$ExpandProperty
+        [String[]]$ExpandProperty = ('class_type/device_category','organization')
 
     )
 
-    switch ($PSCmdlet.ParameterSetName) {
-        'ID' {
-            Get-EM7Object device @PSBoundParameters
-        }
-        'Advanced' {
-            Find-EM7Object device @PSBoundParameters
-        }
-    }
+	process {
+
+		if ($Filter -eq $Null) { $Filter = @{} }
+
+		if ($Organization.Length) {
+			$Filter['organization.in'] = $Organization -join ','
+		}
+
+		switch ($PSCmdlet.ParameterSetName) {
+			'ID' {
+				Get-EM7Object device -ID:$ID -ExpandProperty:$ExpandProperty
+			}
+			'Advanced' {
+				Find-EM7Object device -Filter:$Filter -Limit:$Limit -Offset:$Offset -OrderBy:$OrderBy -ExpandProperty:$ExpandProperty
+			}
+		}
+
+	}
 
 }
 
@@ -258,6 +273,12 @@ function Get-EM7Organization {
         [Parameter(ParameterSetName='Advanced')]
         [Hashtable]$Filter,
 
+		# If specified, organizations are searched based on the company name
+		# Wildcards can be used at either end of the name to check for
+		# partial matches.
+		[Parameter(ParameterSetName='Advanced')]
+		[String]$Name,
+
         # Limits the results to the specified number. The default is 1000.
         [Parameter()]
         [Int32]$Limit = $Globals.DefaultLimit,
@@ -285,14 +306,24 @@ function Get-EM7Organization {
 
     )
 
-    switch ($PSCmdlet.ParameterSetName) {
-        'ID' {
-            Get-EM7Object organization @PSBoundParameters
-        }
-        'Advanced' {
-            Find-EM7Object organization @PSBoundParameters
-        }
-    }
+	if ($Filter -eq $Null) { $Filter = @{} }
+
+	if ($Name) {
+		$Operator = ''
+		if ($Name.StartsWith('*') -and $Name.EndsWith('*')) { $Operator = '.contains' }
+		elseif ($Name.StartsWith('*')) { $Operator = '.ends_with' }
+		elseif ($Name.EndsWith('*')) { $Operator = '.begins_with' }
+		$Filter["company$Operator"] = $Name.Trim('*')
+	}
+
+	switch ($PSCmdlet.ParameterSetName) {
+		'ID' {
+			Get-EM7Object organization -ID:$ID -ExpandProperty:$ExpandProperty
+		}
+		'Advanced' {
+			Find-EM7Object organization -Filter:$Filter -Limit:$Limit -Offset:$Offset -OrderBy:$OrderBy -ExpandProperty:$ExpandProperty
+		}
+	}
 
 }
 
