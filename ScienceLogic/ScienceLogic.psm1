@@ -48,7 +48,7 @@ function Connect-EM7 {
     $Globals.Credentials | Add-Member NoteProperty URI $URI
 
     # Will throw not-authorized if the credentials are invalid
-    HttpGet $URI | Out-Null
+    HttpInvoke $URI | Out-Null
 
     $Globals.Credentials | Export-Clixml $Globals.CredentialPath
 
@@ -90,7 +90,7 @@ function Get-EM7Object {
     }
     
     $URI = CreateUri @UriArgs
-    $Result = HttpGet $URI
+    $Result = HttpInvoke $URI
 
 	if ($URI.AbsolutePath -match '^(.*)/([A-Za-z0-9_\-\.]+)$') {
 		$TypeName = $Matches[1]
@@ -172,7 +172,7 @@ function Find-EM7Object {
     }
 
     $URI = CreateUri @UriArgs
-    $Result = HttpGet $URI | UnrollArray
+    $Result = HttpInvoke $URI | UnrollArray
     if ($ExpandProperty.Length) {
         $Cache = @{}
         foreach ($Obj in @($Result)) {
@@ -181,6 +181,113 @@ function Find-EM7Object {
     }
 
     Return $Result
+
+}
+
+##############################################################################
+#.SYNOPSIS
+# Updates the properties of a EM7 object at the specified URI. Only the
+# properties specified in the -InputObject parameter will be updated.
+##############################################################################
+function Set-EM7Object {
+	
+	[CmdletBinding(SupportsShouldProcess=$True)]
+	param(
+
+		# The relative or absolute URI of the resource, such as
+		# /api/organization/1 or https://servername/api/device/9.
+		[Alias("__URI")]
+		[ValidateNotNull()]
+		[Parameter(ValueFromPipelineByPropertyName=$true)]
+		[Uri]$URI,
+
+		# A custom object (which may be a Hashtable or other PSObject
+		# such as a deserialized JSON object or PSCustomObject.)
+		[ValidateNotNull()]
+		[Parameter(Position=1)]
+		[PSObject]$InputObject,
+
+		# If specified, the output of the update will be deserialized
+		# and written to the pipeline.
+		[Parameter()]
+		[Switch]$PassThru
+
+	)
+
+	begin {
+
+		EnsureConnected -ErrorAction Stop
+
+	}
+
+	process {
+
+		# Cmdlet takes an absolute or relative URL
+		# If relative was specified, make it absolute against the API root
+		if (!$URI.IsAbsoluteUri) {
+            $URI = New-Object Uri ($Globals.ApiRoot, $URI.OriginalString)
+        }
+
+		if ($InputObject -is [Hashtable]) {
+
+			if ($InputObject.Count) {
+				# Typically Hashtables were passed in as an argument
+				# They are expected to only contain the properties we want to
+				# update. No scrubbing will be done.
+				$JSON = ConvertTo-Json -InputObject:$InputObject
+			}
+			else {
+				Write-Warning "No properties were updated."
+				return
+			}
+
+		}
+		else {
+
+			# If it's another PSObject, it's probably been piped in from
+			# another command such as Get-EM7Object and modified.
+			# We need to remove 
+
+			$Properties = @(
+				$InputObject | 
+				Get-Member -MemberType NoteProperty | 
+				Where Name -NotLike __* | 
+				Select -ExpandProperty Name
+			)
+
+			if ($Properties.Length) {
+				$InputObject = $InputObject | Select $Properties
+				$JSON = $InputObject | ConvertTo-Json
+			}
+			else {
+				Write-Warning "No writable properties specified."
+				return
+			}
+
+		}
+
+		if ($PSCmdlet.ShouldProcess($URI, "POST: $JSON")) {
+
+			$Result = HttpInvoke $URI -Method POST -PostData $JSON
+
+			if ($PassThru) {
+
+				if ($URI.AbsolutePath -match '^(.*)/([A-Za-z0-9_\-\.]+)$') {
+					$TypeName = $Matches[1]
+					$ID = $Matches[2]
+					if ($ID -as [Int32]) { $ID = $ID -as [Int32] }
+					$Result | Add-Member -TypeName $TypeName
+					$Result | Add-Member NoteProperty __ID $ID
+					$Result | Add-Member NoteProperty __URI $URI.AbsolutePath
+				}
+
+				Write-Output $Result
+
+			}
+
+		}
+
+	}
 
 }
 
@@ -522,7 +629,7 @@ function ExpandProperty {
             # First check the cache
             if (!$Cache[$URI]) {
                 # Not there? Go get it.
-                $Cache[$URI] = HttpGet (%New-Uri $URI -BaseUri $Globals.ApiRoot -QueryString @{extended_fetch=1}) | UnrollArray
+                $Cache[$URI] = HttpInvoke (%New-Uri $URI -BaseUri $Globals.ApiRoot -QueryString @{extended_fetch=1}) | UnrollArray
             }
 
             $InputObject.$P = $Cache[$URI]
@@ -553,18 +660,27 @@ function EnsureConnected {
 
 ##############################################################################
 #.SYNOPSIS
-# Makes a HTTP GET request for a particular URL, passing in the required
+# Makes a HTTP request for a particular URL, passing in the required
 # authentication headers and other global options used with the ScienceLogic
 # EM7 REST API.
 ##############################################################################
-function HttpGet {
+function HttpInvoke {
 
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName="GET")]
     param(
         
         # The URI of the resource
         [Parameter(Position=1, Mandatory=$true)]
         [URI]$URI,
+
+		# Specifies the HTTP verb to use.
+		# The default is GET
+		[Parameter(ParameterSetName="Advanced")]
+		[String]$Method = "GET",
+
+		# The POST data to include in the request.
+		[Parameter(ParameterSetName="Advanced")]
+		[String]$PostData,
 
         # Not currently implemented
         [Parameter()]
@@ -574,6 +690,8 @@ function HttpGet {
 
     [System.Net.HttpWebRequest]$Request = $Null
     [System.Net.HttpWebResponse]$Response = $Null
+	[System.IO.Stream]$RequestStream = $Null
+	[System.IO.StreamWriter]$RequestWriter = $Null
     [System.IO.Stream]$ResponseStream = $Null
     [System.IO.StreamReader]$ResponseReader = $Null
 
@@ -582,7 +700,7 @@ function HttpGet {
         $Cred    = $Globals.Credentials.GetNetworkCredential()
     
         $Request = [System.Net.HttpWebRequest]([System.Net.WebRequest]::Create($URI))
-        $Request.Method = 'GET'
+        $Request.Method = $Method
         $Request.Accept = 'application/json'
         $Request.Headers.Add('Authorization', "Basic $([Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($Cred.UserName + ':' + $Cred.Password)))")
 
@@ -591,6 +709,16 @@ function HttpGet {
         }
 
         $Request.AllowAutoRedirect = $false
+
+		if ($PostData) {
+			$Request.ContentType = "application/json"
+			$RequestStream = $Request.GetRequestStream()
+			$RequestWriter = New-Object System.IO.StreamWriter ($RequestStream)
+			$RequestWriter.Write($PostData)
+			$RequestWriter.Flush()
+			$RequestWriter.Close()
+			$RequestStream.Close()
+		}
 
         $Response = $Request.GetResponse()
         $ResponseStream = $Response.GetResponseStream()
@@ -605,6 +733,8 @@ function HttpGet {
     }
     finally {
 
+		if ($RequestWriter) { $RequestWriter.Dispose() }
+		if ($RequestStream) { $RequestStream.Dispose() }
         if ($ResponseReader) { $ResponseReader.Dispose() }
         if ($ResponseStream) { $ResponseStream.Dispose() }
         if ($Response) { $Response.Dispose() }
