@@ -9,7 +9,7 @@
 $Globals = @{
     ApiRoot         = $Null
     Credentials     = $Null
-    FormatResponse  = $true
+    FormatResponse  = $false
     HideFilterInfo  = 0
     DefaultLimit    = 1000
     CredentialPath  = "${ENV:TEMP}\slcred.xml"
@@ -37,13 +37,23 @@ function Connect-EM7 {
 
         # The API root URI
         [Parameter(Position=1, Mandatory=$true)]
-        [Uri]$URI
+        [Uri]$URI,
+
+		# Specify this when you'll be using a HTTP debugger like Fiddler.
+		# It will cause the JSON to be formatted with whitespace for easier
+		# reading, but is more likely to result in errors with larger responses.
+		[Parameter()]
+		[Switch]$Formatted
 
     )
+
+	# Force trailing slash
+	if ($URI -notlike '*/') { $URI = "$URI/" }
 
     if (Test-Path $Globals.CredentialPath) { Remove-Item $Globals.CredentialPath }
 
     $Globals.ApiRoot = $URI
+	$Globals.FormatResponse = $Formatted.IsPresent
     $Globals.Credentials = Get-Credential -Message 'Enter your ScienceLogic API credentials.'
     $Globals.Credentials | Add-Member NoteProperty URI $URI
 
@@ -231,10 +241,14 @@ function Set-EM7Object {
 		if ($InputObject -is [Hashtable]) {
 
 			if ($InputObject.Count) {
+
+				$Compress = !$Globals.FormatResponse
+
 				# Typically Hashtables were passed in as an argument
 				# They are expected to only contain the properties we want to
 				# update. No scrubbing will be done.
-				$JSON = ConvertTo-Json -InputObject:$InputObject
+				$JSON = ConvertTo-Json -InputObject:$InputObject -Compress:$Compress
+
 			}
 			else {
 				Write-Warning "No properties were updated."
