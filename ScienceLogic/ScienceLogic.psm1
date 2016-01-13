@@ -18,6 +18,7 @@ $Globals = @{
 if (Test-Path $Globals.CredentialPath) {
     $Globals.Credentials = Import-Clixml $Globals.CredentialPath -ErrorAction 0
     $Globals.ApiRoot = $Globals.Credentials.URI
+	$Globals.FormatResponse = $Globals.Credentials.FormatResponse
 }
 
 ##############################################################################
@@ -56,6 +57,7 @@ function Connect-EM7 {
 	$Globals.FormatResponse = $Formatted.IsPresent
     $Globals.Credentials = Get-Credential -Message 'Enter your ScienceLogic API credentials.'
     $Globals.Credentials | Add-Member NoteProperty URI $URI
+    $Globals.Credentials | Add-Member NoteProperty FormatResponse $Formatted.IsPresent
 
     # Will throw not-authorized if the credentials are invalid
     HttpInvoke $URI | Out-Null
