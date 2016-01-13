@@ -182,15 +182,17 @@ function Find-EM7Object {
     }
 
     $URI = CreateUri @UriArgs
-    $Result = HttpInvoke $URI | UnrollArray
+    $Result = @(HttpInvoke $URI | UnrollArray)
     if ($ExpandProperty.Length) {
         $Cache = @{}
-        foreach ($Obj in @($Result)) {
+        foreach ($Obj in $Result) {
             ExpandProperty $Obj $ExpandProperty -Cache:$Cache
         }
     }
 
-    Return $Result
+	if ($Result.Length) {
+		Return $Result
+	}
 
 }
 
@@ -448,6 +450,85 @@ function Get-EM7Organization {
 
 }
 
+function Add-EM7DeviceGroupMember {
+
+	[CmdletBinding(DefaultParameterSetName='Name', SupportsShouldProcess=$true)]
+	param(
+
+		[Parameter(ParameterSetName='Name', Position=1, Mandatory=$true)]
+		[String]$Name,
+
+		[Parameter(ParameterSetName='ID', Mandatory=$true)]
+		[Int32]$ID,
+
+		[Alias("__DeviceID")]
+		[Parameter(Mandatory=$true, ValueFromPipelineByPropertyName=$true)]
+		[String[]]$DeviceID
+
+	)
+
+	begin {
+
+		$Changes = 0
+		$DeviceGroup = $Null
+
+		if ($ID) { $DeviceGroup = Get-EM7Object -Resource device_group -ID $ID -ErrorAction 0 }
+		elseif ($Name) { $DeviceGroup = Find-EM7Object -Resource device_group -Filter @{name=$Name} -Limit 2 }
+
+		if (!$DeviceGroup) {
+			$DeviceGroup = $Null
+			Write-Error "No matching device groups."
+			Return
+		}
+		elseif ($DeviceGroup.Count -gt 1) {
+			$DeviceGroup = $Null
+			Write-Error "More than one matching device group."
+			Return
+		}
+		else {
+
+			if (!$DeviceGroup.devices) {
+				$DeviceGroup.devices = @()
+			}
+
+			Write-Verbose "Device Group: $($DeviceGroup.Name) ($($DeviceGroup.__URI))"
+			Write-Verbose "Initial Devices: $($DeviceGroup.devices -join ',')"
+
+		}
+
+	}
+
+	process {
+
+		if ($DeviceGroup) {
+
+			foreach ($DID in $DeviceID) {
+
+				if ($DID -as [Int32]) {
+					$DID = "/api/device/$DID"
+				}
+
+				if ($PSCmdlet.ShouldProcess($DeviceGroup.__URI, "Add Device $DID")) {
+					$Changes += 1
+					$DeviceGroup.devices += $DID
+				}
+
+			}
+
+		}
+
+	}
+
+	end {
+
+		if ($DeviceGroup -and $Changes) {
+			Set-EM7Object -URI $DeviceGroup.__URI @{devices=$DeviceGroup.devices}
+		}
+
+	}
+
+}
+
 ##############################################################################
 # PRIVATE FUNCTIONS
 ##############################################################################
@@ -544,25 +625,32 @@ function UnrollArray {
 
     if ($InputObject.result_set) {
         $InputObject = $InputObject.result_set
+		
     }
 
-    $UriKeys = @($InputObject | Get-Member -Name '/api/*' | Select -ExpandProperty Name)
-    if ($UriKeys.Count) {
-        $UriKeys | ForEach { 
-			$Item = $InputObject.$_ 
-			if ($_ -match '^(.*)/([A-Za-z0-9_\-\.]+)$') {
-				$TypeName = $Matches[1]
-				$ID = $Matches[2]
-				if ($ID -as [Int32]) { $ID = $ID -as [Int32] }
-				$Item | Add-Member -TypeName $TypeName
-				$Item | Add-Member NoteProperty __ID $ID
-				$Item | Add-Member NoteProperty __URI $_
+	$AllKeys = @($InputObject | Get-Member -MemberType NoteProperty | Select -ExpandProperty Name)
+    $UriKeys = @($AllKeys -like '/api/*')
+    if ($AllKeys.Count) {
+		if ($AllKeys.Count -eq $UriKeys.Count) {
+			$UriKeys | ForEach { 
+				$Item = $InputObject.$_ 
+				if ($_ -match '^(.*)/([A-Za-z0-9_\-\.]+)$') {
+					$TypeName = $Matches[1]
+					$ID = $Matches[2]
+					if ($ID -as [Int32]) { $ID = $ID -as [Int32] }
+					$Item | Add-Member -TypeName $TypeName
+					$Item | Add-Member NoteProperty __ID $ID
+					$Item | Add-Member NoteProperty __URI $_
+				}
+				Write-Output $Item
 			}
-			Write-Output $Item
 		}
-    }
-    else {
-        Write-Output $InputObject
+		else {
+			# Not sure what this object is.
+			# It has properties, but not all of them are URI keys
+			# Just return it as-is.
+			Write-Output $InputObject
+		}
     }
 
 }
