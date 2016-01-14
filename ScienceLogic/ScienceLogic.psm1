@@ -452,6 +452,74 @@ function Get-EM7Organization {
 
 }
 
+function Get-EM7DeviceGroup {
+
+	[CmdletBinding(DefaultParameterSetName='Advanced')]
+	param(
+
+        # If specified, retrieves the device group with the specified ID
+        [Parameter(ParameterSetName='ID', Position=1, Mandatory=$true)]
+        [Int32]$ID,
+
+        # If specifieed, the keys of this hashtable are prefixed with
+        # 'filter.' and used as filters. For example: @{state='PA'}
+        [Parameter(ParameterSetName='Advanced')]
+        [Hashtable]$Filter,
+
+		# If specified, device groups are searched based on the name
+		# Wildcards can be used at either end of the name to check for
+		# partial matches.
+		[Parameter(ParameterSetName='Advanced')]
+		[String]$Name,
+
+        # Limits the results to the specified number. The default is 1000.
+        [Parameter()]
+        [Int32]$Limit = $Globals.DefaultLimit,
+
+        # The starting offset in the results to return.
+        # If retrieving objects in pages of 100, you would specify 0 for page 1,
+        # 100 for page 2, 200 for page 3, and so on.
+        [Parameter()]
+        [Int32]$Offset = 0,
+
+        # Optionally sorts the results by this field in ascending order, or if
+        # the field is prefixed with a dash (-) in descending order.
+        # You can also pipe the output to PowerShell's Sort-Object cmdlet, but
+        # this parameter is processed on the server, which will affect how
+        # results are paginated when there are more results than fit in a
+        # single page.
+        [Parameter()]
+        [String]$OrderBy,
+
+        # Specifies one or more property names that ordinarily contain a link
+        # to a related object to automatically retrieve and place in the 
+        # returned object.
+        [Parameter()]
+        [String[]]$ExpandProperty
+
+	)
+
+	if ($Filter -eq $Null) { $Filter = @{} }
+
+	if ($Name) {
+		$Operator = ''
+		if ($Name.StartsWith('*') -and $Name.EndsWith('*')) { $Operator = '.contains' }
+		elseif ($Name.StartsWith('*')) { $Operator = '.ends_with' }
+		elseif ($Name.EndsWith('*')) { $Operator = '.begins_with' }
+		$Filter["name$Operator"] = $Name.Trim('*')
+	}
+
+	switch ($PSCmdlet.ParameterSetName) {
+		'ID' {
+			Get-EM7Object device_group -ID:$ID -ExpandProperty:$ExpandProperty
+		}
+		'Advanced' {
+			Find-EM7Object device_group -Filter:$Filter -Limit:$Limit -Offset:$Offset -OrderBy:$OrderBy -ExpandProperty:$ExpandProperty
+		}
+	}
+
+}
+
 ##############################################################################
 #.SYNOPSIS
 # Adds a device as a static member of the specified device group.
@@ -470,19 +538,16 @@ function Add-EM7DeviceGroupMember {
 		[Parameter(ParameterSetName='ID', Mandatory=$true)]
 		[Int32]$ID,
 
-		# One or more IDs of devices to add to the device group.
-		# The URI format is preferred, but simple numeric strings will be
-		# converted to /api/device/X URIs if needed.
-		# You can pipe the output of Get-EM7Device to this parameter.
-		[Alias("__DeviceID")]
-		[Parameter(Mandatory=$true, ValueFromPipelineByPropertyName=$true)]
-		[String[]]$DeviceID
+		# A device piped from the output of another command (such as Get-EM7Device).
+		# This property must be a device and have a corresponding device URI.
+		[Parameter(ValueFromPipeline=$true)]
+		[PSObject[]]$Device
 
 	)
 
 	begin {
 
-		$Changes = 0
+		$Changes = @()
 		$DeviceGroup = $Null
 
 		# The device group to add devices to can be supplied by ID or name
@@ -530,19 +595,30 @@ function Add-EM7DeviceGroupMember {
 
 		if ($DeviceGroup) {
 
-			foreach ($DID in $DeviceID) {
+			foreach ($D in $Device) {
 
-				# If a simple integer was supplied, convert it to a
-				# resource uri for the specified device.
-				# From here on out, we're using uri format.
+				$DID = $D
 
+				# If a device object was used as input instead of a URI or ID,
+				# make sure we extract its __URI
+				if ($DID -is [PSObject]) {
+					$DID = $DID.__URI
+				}
+
+				# Normalize integer IDs to URIs
 				if ($DID -as [Int32]) {
 					$DID = "/api/device/$DID"
 				}
 
+				# Make sure URI represents a device
+				if ($DID -notmatch '^/api/device/\d+$') {
+					Write-Error "Expected input: $D"
+					continue
+				}
+
 				# Check if device group already contains device id
 				if ($DeviceGroup.devices -contains $DID) {
-					Write-Verbose "Device Group $($DeviceGroup.__URI) already contains $DID"
+					Write-Host "Device Group $($DeviceGroup.__URI) already contains $DID"
 				}
 				else {
 
@@ -550,8 +626,12 @@ function Add-EM7DeviceGroupMember {
 					# be made to the device group.
 
 					if ($PSCmdlet.ShouldProcess($DeviceGroup.__URI, "Add Device $DID")) {
-						$Changes += 1
+						
+						Write-Verbose "Adding $DID"
+						
+						$Changes += $D
 						$DeviceGroup.devices += $DID
+
 					}
 
 				}
@@ -569,8 +649,12 @@ function Add-EM7DeviceGroupMember {
 		# Double check we have a device group and changes were actually made.
 		# Only push the devices property, rather than the entire object.
 
-		if ($DeviceGroup -and $Changes) {
+		if ($DeviceGroup -and $Changes.Count) {
+
 			Set-EM7Object -URI $DeviceGroup.__URI @{devices=$DeviceGroup.devices}
+
+			Write-Output $Changes
+
 		}
 
 	}
@@ -760,6 +844,17 @@ function ExpandProperty {
             $URI = $InputObject.$P
 
         }
+		elseif ($InputObject.$P -is [Array]) {
+
+			if (!($InputObject.$P -notlike '/api/*')) {
+
+				$URI = $InputObject.$P
+
+				$InputObject.$P = @()
+
+			}
+
+		}
         else {
 
             # URI is a complex property
@@ -774,15 +869,20 @@ function ExpandProperty {
 
         }
 
-        if ($URI) {
+        foreach ($U in $URI) {
 
             # First check the cache
-            if (!$Cache[$URI]) {
+            if (!$Cache[$U]) {
                 # Not there? Go get it.
-                $Cache[$URI] = HttpInvoke (%New-Uri $URI -BaseUri $Globals.ApiRoot -QueryString @{extended_fetch=1}) | UnrollArray
+                $Cache[$U] = HttpInvoke (%New-Uri $U -BaseUri $Globals.ApiRoot -QueryString @{extended_fetch=1}) | UnrollArray
             }
 
-            $InputObject.$P = $Cache[$URI]
+			if ($URI -is [Array]) {
+				$InputObject.$P += $Cache[$U]
+			}
+			else {
+				$InputObject.$P = $Cache[$U]
+			}
 
         }
 
