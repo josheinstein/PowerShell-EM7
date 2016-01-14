@@ -452,17 +452,28 @@ function Get-EM7Organization {
 
 }
 
+##############################################################################
+#.SYNOPSIS
+# Adds a device as a static member of the specified device group.
+##############################################################################
 function Add-EM7DeviceGroupMember {
 
 	[CmdletBinding(DefaultParameterSetName='Name', SupportsShouldProcess=$true)]
 	param(
 
+		# The name of an existing device group.
+		# This must match one and only one device group, otherwise use ID.
 		[Parameter(ParameterSetName='Name', Position=1, Mandatory=$true)]
 		[String]$Name,
 
+		# The ID of an existing device group.
 		[Parameter(ParameterSetName='ID', Mandatory=$true)]
 		[Int32]$ID,
 
+		# One or more IDs of devices to add to the device group.
+		# The URI format is preferred, but simple numeric strings will be
+		# converted to /api/device/X URIs if needed.
+		# You can pipe the output of Get-EM7Device to this parameter.
 		[Alias("__DeviceID")]
 		[Parameter(Mandatory=$true, ValueFromPipelineByPropertyName=$true)]
 		[String[]]$DeviceID
@@ -474,27 +485,42 @@ function Add-EM7DeviceGroupMember {
 		$Changes = 0
 		$DeviceGroup = $Null
 
+		# The device group to add devices to can be supplied by ID or name
+		# Use the appropriate command to get the device group object
+
 		if ($ID) { $DeviceGroup = Get-EM7Object -Resource device_group -ID $ID -ErrorAction 0 }
 		elseif ($Name) { $DeviceGroup = Find-EM7Object -Resource device_group -Filter @{name=$Name} -Limit 2 }
 
-		if (!$DeviceGroup) {
+		if ($DeviceGroup -eq $Null -or $DeviceGroup.Count -eq 0) {
+			
+			# They specified a device group id or name and no matching
+			# device group was found.
+
 			$DeviceGroup = $Null
 			Write-Error "No matching device groups."
 			Return
+
 		}
 		elseif ($DeviceGroup.Count -gt 1) {
+			
+			# They specified a device group name and more than one matched
+
 			$DeviceGroup = $Null
 			Write-Error "More than one matching device group."
 			Return
+
 		}
 		else {
+
+			# Okay, we have exactly one device group.
+			# Make sure the devices property is initialized.
 
 			if (!$DeviceGroup.devices) {
 				$DeviceGroup.devices = @()
 			}
 
 			Write-Verbose "Device Group: $($DeviceGroup.Name) ($($DeviceGroup.__URI))"
-			Write-Verbose "Initial Devices: $($DeviceGroup.devices -join ',')"
+			Write-Verbose "Initial Devices: $(($DeviceGroup.devices | Split-Path -Leaf) -join ', ')"
 
 		}
 
@@ -506,13 +532,28 @@ function Add-EM7DeviceGroupMember {
 
 			foreach ($DID in $DeviceID) {
 
+				# If a simple integer was supplied, convert it to a
+				# resource uri for the specified device.
+				# From here on out, we're using uri format.
+
 				if ($DID -as [Int32]) {
 					$DID = "/api/device/$DID"
 				}
 
-				if ($PSCmdlet.ShouldProcess($DeviceGroup.__URI, "Add Device $DID")) {
-					$Changes += 1
-					$DeviceGroup.devices += $DID
+				# Check if device group already contains device id
+				if ($DeviceGroup.devices -contains $DID) {
+					Write-Verbose "Device Group $($DeviceGroup.__URI) already contains $DID"
+				}
+				else {
+
+					# If -WhatIf was supplied, ShouldProcess returns false and no change will
+					# be made to the device group.
+
+					if ($PSCmdlet.ShouldProcess($DeviceGroup.__URI, "Add Device $DID")) {
+						$Changes += 1
+						$DeviceGroup.devices += $DID
+					}
+
 				}
 
 			}
@@ -522,6 +563,11 @@ function Add-EM7DeviceGroupMember {
 	}
 
 	end {
+
+		# Changes are collected throughout the pipeline invocation and
+		# only pushed up to the server at the end.
+		# Double check we have a device group and changes were actually made.
+		# Only push the devices property, rather than the entire object.
 
 		if ($DeviceGroup -and $Changes) {
 			Set-EM7Object -URI $DeviceGroup.__URI @{devices=$DeviceGroup.devices}
