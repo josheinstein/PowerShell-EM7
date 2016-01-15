@@ -83,7 +83,7 @@ function Get-EM7Object {
 
         # The ID of a specific entity to retrieve.
         [Parameter(Position=2, Mandatory=$true)]
-        [Int32]$ID,
+        [Int32[]]$ID,
 
         # Specifies one or more property names that ordinarily contain a link
         # to a related object to automatically retrieve and place in the 
@@ -95,32 +95,18 @@ function Get-EM7Object {
 
 	EnsureConnected -ErrorAction Stop
 
-    $UriArgs = @{
-        ID = $ID
-        Resource = $Resource
-        Extended = $true
-    }
-    
-    $URI = CreateUri @UriArgs
-    $Result = HttpInvoke $URI
-
-	if ($URI.AbsolutePath -match '^(.*)/([A-Za-z0-9_\-\.]+)$') {
-		$TypeName = $Matches[1]
-		$ID = $Matches[2]
-		if ($ID -as [Int32]) { $ID = $ID -as [Int32] }
-		$Result | Add-Member -TypeName $TypeName
-		$Result | Add-Member NoteProperty __ID $ID
-		$Result | Add-Member NoteProperty __URI $URI.AbsolutePath
+	$FindArgs = @{
+		Resource = $Resource
+		ExpandProperty = $ExpandProperty
+		Filter = @{}
+		Limit = $Globals.DefaultLimit
 	}
 
-    if ($ExpandProperty.Length) {
-        $Cache = @{}
-        foreach ($Obj in @($Result)) {
-            ExpandProperty $Obj $ExpandProperty -Cache:$Cache
-        }
-    }
+	if ($ID) {
+		$FindArgs.Filter['_id.in'] = $ID -join ','
+	}
 
-    Return $Result
+	Find-EM7Object @FindArgs
 
 }
 
@@ -320,7 +306,7 @@ function Get-EM7Device {
 
         # If specified, retrieves the device with the specified ID
         [Parameter(ParameterSetName='ID', Position=1, Mandatory=$true)]
-        [Int32]$ID,
+        [Int32[]]$ID,
 
         # If specified, the keys of this hashtable are prefixed with
         # 'filter.' and used as filters. For example: @{organization=6}
@@ -391,7 +377,7 @@ function Get-EM7Organization {
 
         # If specified, retrieves the organization with the specified ID
         [Parameter(ParameterSetName='ID', Position=1, Mandatory=$true)]
-        [Int32]$ID,
+        [Int32[]]$ID,
 
         # If specifieed, the keys of this hashtable are prefixed with
         # 'filter.' and used as filters. For example: @{state='PA'}
@@ -459,7 +445,7 @@ function Get-EM7DeviceGroup {
 
         # If specified, retrieves the device group with the specified ID
         [Parameter(ParameterSetName='ID', Position=1, Mandatory=$true)]
-        [Int32]$ID,
+        [Int32[]]$ID,
 
         # If specifieed, the keys of this hashtable are prefixed with
         # 'filter.' and used as filters. For example: @{state='PA'}
