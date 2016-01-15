@@ -42,4 +42,13 @@
             </AliasProperty>
         </Members>
     </Type>
+    <Type>
+        <Name>/api/device_group</Name>
+        <Members>
+            <AliasProperty>
+                <Name>__DeviceGroupID</Name>
+                <ReferencedMemberName>__ID</ReferencedMemberName>
+            </AliasProperty>
+        </Members>
+    </Type>
 </Types>
