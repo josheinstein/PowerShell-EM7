@@ -96,12 +96,7 @@
                         <Alignment>left</Alignment>
                     </TableColumnHeader>
                     <TableColumnHeader>
-                        <Label>Name</Label>
-                        <Width>20</Width>
-                        <Alignment>left</Alignment>
-                    </TableColumnHeader>
-                    <TableColumnHeader>
-                        <Label>Address</Label>
+                        <Label>Company</Label>
                         <Width>20</Width>
                         <Alignment>left</Alignment>
                     </TableColumnHeader>
@@ -116,22 +111,17 @@
                         <Alignment>left</Alignment>
                     </TableColumnHeader>
                     <TableColumnHeader>
-                        <Label>ZIP</Label>
-                        <Width>6</Width>
-                        <Alignment>left</Alignment>
-                    </TableColumnHeader>
-                    <TableColumnHeader>
                         <Label>Phone</Label>
                         <Width>15</Width>
                         <Alignment>left</Alignment>
                     </TableColumnHeader>
                     <TableColumnHeader>
-                        <Label>Billing ID</Label>
+                        <Label>Billing_ID</Label>
                         <Width>10</Width>
                         <Alignment>right</Alignment>
                     </TableColumnHeader>
                     <TableColumnHeader>
-                        <Label>CRM ID</Label>
+                        <Label>CRM_ID</Label>
                         <Width>10</Width>
                         <Alignment>right</Alignment>
                     </TableColumnHeader>
@@ -146,16 +136,10 @@
                                 <PropertyName>company</PropertyName>
                             </TableColumnItem>
                             <TableColumnItem>
-                                <PropertyName>address</PropertyName>
-                            </TableColumnItem>
-                            <TableColumnItem>
                                 <PropertyName>city</PropertyName>
                             </TableColumnItem>
                             <TableColumnItem>
                                 <PropertyName>state</PropertyName>
-                            </TableColumnItem>
-                            <TableColumnItem>
-                                <PropertyName>zip</PropertyName>
                             </TableColumnItem>
                             <TableColumnItem>
                                 <PropertyName>phone</PropertyName>

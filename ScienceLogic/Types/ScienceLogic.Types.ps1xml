@@ -40,6 +40,10 @@
                 <Name>__OrganizationID</Name>
                 <ReferencedMemberName>__ID</ReferencedMemberName>
             </AliasProperty>
+            <AliasProperty>
+                <Name>Name</Name>
+                <ReferencedMemberName>company</ReferencedMemberName>
+            </AliasProperty>
         </Members>
     </Type>
     <Type>
