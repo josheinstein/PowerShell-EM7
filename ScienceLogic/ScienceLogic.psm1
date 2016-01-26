@@ -11,7 +11,8 @@ $Globals = @{
     Credentials     = $Null
     FormatResponse  = $false
     HideFilterInfo  = 0
-    DefaultLimit    = 1000
+    DefaultLimit    = 100
+	DefaultPageSize = 500
     CredentialPath  = "${ENV:TEMP}\slcred.xml"
 }
 
@@ -169,17 +170,39 @@ function Find-EM7Object {
         OrderBy = $OrderBy
     }
 
-    $URI = CreateUri @UriArgs
-    $Result = @(HttpInvoke $URI | UnrollArray)
-    if ($ExpandProperty.Length) {
-        $Cache = @{}
-        foreach ($Obj in $Result) {
-            ExpandProperty $Obj $ExpandProperty -Cache:$Cache
-        }
-    }
+	if ($UriArgs.Limit -gt $Globals.DefaultPageSize) {
+		$UriArgs.Limit = $Globals.DefaultPageSize
+	}
 
-	if ($Result.Length) {
-		Return $Result
+	$OutputCount = 0
+
+	while ($OutputCount -lt $Limit) {
+
+		$URI = CreateUri @UriArgs
+		$Result = @(HttpInvoke $URI | UnrollArray)
+		if ($ExpandProperty.Length) {
+			$Cache = @{}
+			foreach ($Obj in $Result) {
+				ExpandProperty $Obj $ExpandProperty -Cache:$Cache
+			}
+		}
+
+		if ($Result.Length) {
+			
+			Write-Output $Result
+
+			$OutputCount += $Result.Length
+			$UriArgs.Offset += $Result.Length
+
+			if ($UriArgs.Offset + $UriArgs.Limit -gt $Limit) {
+				$UriArgs.Limit = $Limit - $UriArgs.Offset
+			}
+
+		}
+		else {
+			break
+		}
+
 	}
 
 }
@@ -923,6 +946,8 @@ function HttpInvoke {
         [Switch]$ThrowIfNotFound
 
     )
+
+	Write-Verbose "$Method $URI"
 
     [System.Net.HttpWebRequest]$Request = $Null
     [System.Net.HttpWebResponse]$Response = $Null
