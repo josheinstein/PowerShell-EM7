@@ -21,6 +21,11 @@ function Get-EM7Device {
         [Parameter(ParameterSetName='Advanced', ValueFromPipelineByPropertyName=$true)]
         [Int32[]]$Organization,
 
+        # If specified, devices with the given IP address are searched.
+        # Wildcards are allowed.
+        [Parameter(ParameterSetName='Advanced')]
+        [String]$IP,
+
         # Limits the results to the specified number. The default is 1000.
         [Parameter(ParameterSetName='Advanced')]
         [Int32]$Limit = $Globals.DefaultLimit,
@@ -44,7 +49,7 @@ function Get-EM7Device {
         # to a related object to automatically retrieve and place in the 
         # returned object.
         [Parameter()]
-        [String[]]$ExpandProperty = ('class_type/device_category','organization')
+        [String[]]$ExpandProperty
 
     )
 
@@ -60,6 +65,14 @@ function Get-EM7Device {
 
         if ($Organization.Length) {
             $Filter['organization.in'] = $Organization -join ','
+        }
+
+        if ($IP) {
+            $Operator = ''
+            if ($IP.StartsWith('*') -and $IP.EndsWith('*')) { $Operator = '.contains' }
+            elseif ($IP.StartsWith('*')) { $Operator = '.ends_with' }
+            elseif ($IP.EndsWith('*')) { $Operator = '.begins_with' }
+            $Filter["ip$Operator"] = $IP.Trim('*')
         }
 
         switch ($PSCmdlet.ParameterSetName) {
