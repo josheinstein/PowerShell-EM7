@@ -16,12 +16,23 @@ function Connect-EM7 {
         # It will cause the JSON to be formatted with whitespace for easier
         # reading, but is more likely to result in errors with larger responses.
         [Parameter()]
-        [Switch]$Formatted
+        [Switch]$Formatted,
+
+        # If specified, SSL errors will be ignored in all SSL requests made
+        # from this PowerShell session. This is an awful hacky way of doing
+        # this and it should only be used for testing.
+        [Parameter()]
+        [Switch]$IgnoreSSLErrors
 
     )
 
     # Force trailing slash
     if ($URI -notlike '*/') { $URI = "$URI/" }
+
+    $Globals.IgnoreSSLErrors = $IgnoreSSLErrors.IsPresent
+    if ($IgnoreSSLErrors) {
+        [Net.ServicePointManager]::ServerCertificateValidationCallback = {$true}
+    }
 
     if (Test-Path $Globals.CredentialPath) { Remove-Item $Globals.CredentialPath }
 
@@ -269,7 +280,7 @@ function Set-EM7Object {
 
             # If it's another PSObject, it's probably been piped in from
             # another command such as Get-EM7Object and modified.
-            # We need to remove 
+            # We need to exclude aliases and internal properties.
 
             $Properties = @(
                 $InputObject | 
@@ -303,6 +314,104 @@ function Set-EM7Object {
                     $Result | Add-Member NoteProperty __ID $ID
                     $Result | Add-Member NoteProperty __URI $URI.AbsolutePath
                 }
+
+                Write-Output $Result
+
+            }
+
+        }
+
+    }
+
+}
+
+##############################################################################
+#.SYNOPSIS
+# Creates a new EM7 object at the specified URI using the properties of the
+# input object.
+##############################################################################
+function Add-EM7Object {
+    
+    [CmdletBinding(SupportsShouldProcess=$True)]
+    param(
+
+        # A custom object (which may be a Hashtable or other PSObject
+        # such as a deserialized JSON object or PSCustomObject.)
+        [ValidateNotNull()]
+        [Parameter(Position=1)]
+        [PSObject]$InputObject,
+
+        # If specified, the output of the post will be deserialized
+        # and written to the pipeline.
+        [Parameter()]
+        [Switch]$PassThru
+
+    )
+
+    begin {
+
+        EnsureConnected -ErrorAction Stop
+
+    }
+
+    process {
+
+        if ($InputObject -is [Hashtable]) {
+
+            if ($InputObject.Count) {
+
+                $Compress = !$Globals.FormatResponse
+
+                # Typically Hashtables were passed in as an argument
+                # They are expected to only contain the properties we want to
+                # update. No scrubbing will be done.
+                $JSON = ConvertTo-Json -InputObject:$InputObject -Compress:$Compress
+
+            }
+            else {
+                Write-Warning "No properties were updated."
+                return
+            }
+
+        }
+        else {
+
+            # If it's another PSObject, it's probably been piped in from
+            # another command such as Get-EM7Object and modified.
+            # We need to exclude aliases and internal properties.
+
+            $Properties = @(
+                $InputObject | 
+                Get-Member -MemberType NoteProperty | 
+                Where Name -NotLike __* | 
+                Select -ExpandProperty Name
+            )
+
+            if ($Properties.Length) {
+                $InputObject = $InputObject | Select $Properties
+                $JSON = $InputObject | ConvertTo-Json
+            }
+            else {
+                Write-Warning "No writable properties specified."
+                return
+            }
+
+        }
+
+        if ($PSCmdlet.ShouldProcess($URI, "POST: $JSON")) {
+
+            $Result = HttpInvoke $URI -Method POST -PostData $JSON
+
+            if ($PassThru) {
+
+                #if ($URI.AbsolutePath -match '^(.*)/([A-Za-z0-9_\-\.]+)$') {
+                #    $TypeName = $Matches[1]
+                #    $ID = $Matches[2]
+                #    if ($ID -as [Int32]) { $ID = $ID -as [Int32] }
+                #    $Result | Add-Member -TypeName $TypeName
+                #    $Result | Add-Member NoteProperty __ID $ID
+                #    $Result | Add-Member NoteProperty __URI $URI.AbsolutePath
+                #}
 
                 Write-Output $Result
 

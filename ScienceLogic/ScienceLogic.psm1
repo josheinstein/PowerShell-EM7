@@ -14,6 +14,7 @@ $Globals = @{
     DefaultLimit    = 100
 	DefaultPageSize = 500
     CredentialPath  = "${ENV:TEMP}\slcred.xml"
+    IgnoreSSLErrors = $false
 }
 
 if (Test-Path $Globals.CredentialPath) {
