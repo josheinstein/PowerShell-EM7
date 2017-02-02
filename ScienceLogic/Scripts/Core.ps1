@@ -329,11 +329,21 @@ function Set-EM7Object {
 #.SYNOPSIS
 # Creates a new EM7 object at the specified URI using the properties of the
 # input object.
+#
+#.RETURNS
+# The object that was created.
 ##############################################################################
 function Add-EM7Object {
     
     [CmdletBinding(SupportsShouldProcess=$True)]
     param(
+
+        # The relative or absolute URI of the resource index, such as /api/organization/.
+        # Do not include an identity value in this property, as the ID will be provided.
+        [Alias("__URI")]
+        [ValidateNotNull()]
+        [Parameter(ValueFromPipelineByPropertyName=$true)]
+        [Uri]$URI,
 
         # A custom object (which may be a Hashtable or other PSObject
         # such as a deserialized JSON object or PSCustomObject.)
