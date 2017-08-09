@@ -83,7 +83,7 @@ function UnrollArray {
 
         # The objects whose properties are to be enumerated and unrolled
         # into an array of those properties' values.
-        [Parameter(Position=1, ValueFromPipeline=$true)]
+        [Parameter(Position=0, ValueFromPipeline=$true)]
         [PSObject]$InputObject
 
     )
@@ -138,12 +138,12 @@ function ExpandProperty {
     param(
 
         # The object that contains links to other objects to be expanded.
-        [Parameter(Position=1)]
+        [Parameter(Position=0)]
         [PSObject]$InputObject,
 
         # One or more property names to expand by making requests for those
         # objects.
-        [Parameter(Position=2)]
+        [Parameter(Position=1)]
         [String[]]$Property,
 
         # When ExpandProperty is being called on multiple objects (for example,
@@ -253,7 +253,7 @@ function HttpInvoke {
     param(
         
         # The URI of the resource
-        [Parameter(Position=1, Mandatory=$true)]
+        [Parameter(Position=0, Mandatory=$true)]
         [URI]$URI,
 
         # Specifies the HTTP verb to use.
@@ -367,7 +367,7 @@ function %New-Uri {
         # A string that contains a valid URI. If -BaseUri is specified, this may be
         # relative to the BaseUri.
         [Alias('u')]
-        [Parameter(Position=1, Mandatory=$true)]
+        [Parameter(Position=0, Mandatory=$true)]
         [String]$Uri,
         
         # The URI to use as the base upon which the Uri builds.

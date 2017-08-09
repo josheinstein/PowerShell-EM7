@@ -8,7 +8,7 @@ function Get-EM7Organization {
     param(
 
         # If specified, retrieves the organization with the specified ID
-        [Parameter(ParameterSetName='ID', Position=1, Mandatory=$true)]
+        [Parameter(ParameterSetName='ID', Position=0, Mandatory=$true)]
         [Int32[]]$ID,
 
         # If specifieed, the keys of this hashtable are prefixed with

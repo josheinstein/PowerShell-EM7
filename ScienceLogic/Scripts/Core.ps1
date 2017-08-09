@@ -9,7 +9,7 @@ function Connect-EM7 {
     param(
 
         # The API root URI
-        [Parameter(Position=1, Mandatory=$true)]
+        [Parameter(Position=0, Mandatory=$true)]
         [Uri]$URI,
 
         # Specify this when you'll be using a HTTP debugger like Fiddler.
@@ -62,11 +62,11 @@ function Get-EM7Object {
         # The name of the resource index to query.
         # See the documentation for value values.
         # Examples include, device, device_group, organization, account...
-        [Parameter(Position=1, Mandatory=$true)]
+        [Parameter(Position=0, Mandatory=$true)]
         [String]$Resource,
 
         # The ID of a specific entity to retrieve.
-        [Parameter(Position=2, Mandatory=$true)]
+        [Parameter(Position=1, Mandatory=$true)]
         [Int32[]]$ID,
 
         # Specifies one or more property names that ordinarily contain a link
@@ -116,7 +116,7 @@ function Find-EM7Object {
         # The name of the resource index to query.
         # See the documentation for value values.
         # Examples include, device, device_group, organization, account...
-        [Parameter(Position=1, Mandatory=$true)]
+        [Parameter(Position=0, Mandatory=$true)]
         [String]$Resource,
 
         # If specifieed, the keys of this hashtable are prefixed with
@@ -224,18 +224,18 @@ function Set-EM7Object {
     [CmdletBinding(SupportsShouldProcess=$True)]
     param(
 
+        # A custom object (which may be a Hashtable or other PSObject
+        # such as a deserialized JSON object or PSCustomObject.)
+        [ValidateNotNull()]
+        [Parameter(Position=0)]
+        [PSObject]$InputObject,
+
         # The relative or absolute URI of the resource, such as
         # /api/organization/1 or https://servername/api/device/9.
         [Alias("__URI")]
         [ValidateNotNull()]
-        [Parameter(ValueFromPipelineByPropertyName=$true)]
+        [Parameter(Mandatory=$true, ValueFromPipelineByPropertyName=$true)]
         [Uri]$URI,
-
-        # A custom object (which may be a Hashtable or other PSObject
-        # such as a deserialized JSON object or PSCustomObject.)
-        [ValidateNotNull()]
-        [Parameter(Position=1)]
-        [PSObject]$InputObject,
 
         # If specified, the output of the update will be deserialized
         # and written to the pipeline.
@@ -338,18 +338,18 @@ function Add-EM7Object {
     [CmdletBinding(SupportsShouldProcess=$True)]
     param(
 
+        # A custom object (which may be a Hashtable or other PSObject
+        # such as a deserialized JSON object or PSCustomObject.)
+        [ValidateNotNull()]
+        [Parameter(Position=0)]
+        [PSObject]$InputObject,
+
         # The relative or absolute URI of the resource index, such as /api/organization/.
         # Do not include an identity value in this property, as the ID will be provided.
         [Alias("__URI")]
         [ValidateNotNull()]
-        [Parameter(ValueFromPipelineByPropertyName=$true)]
+        [Parameter(Mandatory=$true, ValueFromPipelineByPropertyName=$true)]
         [Uri]$URI,
-
-        # A custom object (which may be a Hashtable or other PSObject
-        # such as a deserialized JSON object or PSCustomObject.)
-        [ValidateNotNull()]
-        [Parameter(Position=1)]
-        [PSObject]$InputObject,
 
         # If specified, the output of the post will be deserialized
         # and written to the pipeline.

@@ -19,7 +19,7 @@ and tests the connection to the web service.
 
 Parameter | Required | Pos  | Description 
 --------- | :------: | ---: | ----------- 
-*URI* | X | 2 | The API root URI 
+*URI* | X | 1 | The API root URI 
 *Formatted* |  |  | Specify this when you&#39;ll be using a HTTP debugger like Fiddler. It will cause the JSON to be formatted with whitespace for easier reading, but is more likely to result in errors with larger responses. 
 *IgnoreSSLErrors* |  |  | If specified, SSL errors will be ignored in all SSL requests made from this PowerShell session. This is an awful hacky way of doing this and it should only be used for testing. 
 
@@ -38,7 +38,7 @@ Adds a device as a static member of the specified device group.
 
 Parameter | Required | Pos  | Description 
 --------- | :------: | ---: | ----------- 
-*Name* | X | 2 | The name of an existing device group. This must match one and only one device group, otherwise use ID. 
+*Name* | X | 1 | The name of an existing device group. This must match one and only one device group, otherwise use ID. 
 *ID* | X |  | The ID of an existing device group. 
 *Device* |  |  | A device piped from the output of another command (such as Get-EM7Device). This property must be a device and have a corresponding device URI. 
 *WhatIf* |  |  |  
@@ -58,7 +58,7 @@ filter specification.
 
 Parameter | Required | Pos  | Description 
 --------- | :------: | ---: | ----------- 
-*Resource* | X | 2 | The name of the resource index to query. See the documentation for value values. Examples include, device, device_group, organization, account... 
+*Resource* | X | 1 | The name of the resource index to query. See the documentation for value values. Examples include, device, device_group, organization, account... 
 *Filter* |  |  | If specifieed, the keys of this hashtable are prefixed with &#39;filter.&#39; and used as filters. For example: @{organization=6} 
 *Limit* |  |  | Limits the results to the specified number. The default is 1000. 
 *Offset* |  |  | The starting offset in the results to return. If retrieving objects in pages of 100, you would specify 0 for page 1, 100 for page 2, 200 for page 3, and so on. 
@@ -80,7 +80,7 @@ Get a ScienceLogic EM7 device entity.
 
 Parameter | Required | Pos  | Description 
 --------- | :------: | ---: | ----------- 
-*ID* | X | 2 | If specified, retrieves the device with the specified ID 
+*ID* | X | 1 | If specified, retrieves the device with the specified ID 
 *Filter* |  |  | If specified, the keys of this hashtable are prefixed with &#39;filter.&#39; and used as filters. For example: @{organization=6} 
 *Organization* |  |  | If specified, devices in the given organization are searched. 
 *IP* |  |  | If specified, devices with the given IP address are searched. Wildcards are allowed. 
@@ -111,7 +111,7 @@ function.
 
 Parameter | Required | Pos  | Description 
 --------- | :------: | ---: | ----------- 
-*ID* | X | 2 | If specified, retrieves the device group with the specified ID 
+*ID* | X | 1 | If specified, retrieves the device group with the specified ID 
 *Filter* |  |  | If specifieed, the keys of this hashtable are prefixed with &#39;filter.&#39; and used as filters. For example: @{state=&#39;PA&#39;} 
 *Name* |  |  | If specified, device groups are searched based on the name Wildcards can be used at either end of the name to check for partial matches. 
 *Limit* |  |  | Limits the results to the specified number. The default is 1000. 
@@ -126,7 +126,7 @@ Gets a list of devices that are members of the specified device group.
 
 ### Syntax 
 
-    Get-EM7DeviceGroupMember [-Filter <Hashtable>] [-Name <String>] [-Limit  
+    Get-EM7DeviceGroupMember [-Name <String>] [-Filter <Hashtable>] [-Limit  
                              <Int32>] [-Offset <Int32>] [-OrderBy <String>] [-ExpandProperty <String[]>]  
                              [-Recurse] [<CommonParameters>] 
 
@@ -135,9 +135,9 @@ Gets a list of devices that are members of the specified device group.
 
 Parameter | Required | Pos  | Description 
 --------- | :------: | ---: | ----------- 
-*ID* | X | 2 | If specified, retrieves the device group with the specified ID 
-*Filter* |  |  | If specifieed, the keys of this hashtable are prefixed with &#39;filter.&#39; and used as filters. For example: @{state=&#39;PA&#39;} 
+*ID* | X | 1 | If specified, retrieves the device group with the specified ID 
 *Name* |  |  | If specified, device groups are searched based on the name Wildcards can be used at either end of the name to check for partial matches. 
+*Filter* |  |  | If specifieed, the keys of this hashtable are prefixed with &#39;filter.&#39; and used as filters. For example: @{state=&#39;PA&#39;} 
 *Limit* |  |  | Limits the results to the specified number. The default is 1000. 
 *Offset* |  |  | The starting offset in the results to return. If retrieving objects in pages of 100, you would specify 0 for page 1, 100 for page 2, 200 for page 3, and so on. 
 *OrderBy* |  |  | Optionally sorts the results by this field in ascending order, or if the field is prefixed with a dash (-) in descending order. You can also pipe the output to PowerShell&#39;s Sort-Object cmdlet, but this parameter is processed on the server, which will affect how results are paginated when there are more results than fit in a single page. 
@@ -156,8 +156,8 @@ Retrieves a specific EM7 object by its ID.
 
 Parameter | Required | Pos  | Description 
 --------- | :------: | ---: | ----------- 
-*Resource* | X | 2 | The name of the resource index to query. See the documentation for value values. Examples include, device, device_group, organization, account... 
-*ID* | X | 3 | The ID of a specific entity to retrieve. 
+*Resource* | X | 1 | The name of the resource index to query. See the documentation for value values. Examples include, device, device_group, organization, account... 
+*ID* | X | 2 | The ID of a specific entity to retrieve. 
 *ExpandProperty* |  |  | Specifies one or more property names that ordinarily contain a link to a related object to automatically retrieve and place in the  returned object. 
 
 *** 
@@ -176,7 +176,7 @@ Get a ScienceLogic EM7 organization entity.
 
 Parameter | Required | Pos  | Description 
 --------- | :------: | ---: | ----------- 
-*ID* | X | 2 | If specified, retrieves the organization with the specified ID 
+*ID* | X | 1 | If specified, retrieves the organization with the specified ID 
 *Filter* |  |  | If specifieed, the keys of this hashtable are prefixed with &#39;filter.&#39; and used as filters. For example: @{state=&#39;PA&#39;} 
 *Company* |  |  | If specified, organizations are searched based on the company name Wildcards can be used at either end of the name to check for partial matches. 
 *BillingID* |  |  | Searches for organizations with the specified billing_id. 
@@ -194,13 +194,13 @@ properties specified in the -InputObject parameter will be updated.
 
 ### Syntax 
 
-    Set-EM7Object [-URI <Uri>] [[-InputObject] <PSObject>] [-PassThru] [-WhatIf]  
+    Set-EM7Object [[-InputObject] <PSObject>] -URI <Uri> [-PassThru] [-WhatIf]  
                   [-Confirm] [<CommonParameters>] 
 
 Parameter | Required | Pos  | Description 
 --------- | :------: | ---: | ----------- 
-*URI* |  |  | The relative or absolute URI of the resource, such as /api/organization/1 or https://servername/api/device/9. 
-*InputObject* |  | 2 | A custom object (which may be a Hashtable or other PSObject such as a deserialized JSON object or PSCustomObject.) 
+*InputObject* |  | 1 | A custom object (which may be a Hashtable or other PSObject such as a deserialized JSON object or PSCustomObject.) 
+*URI* | X |  | The relative or absolute URI of the resource, such as /api/organization/1 or https://servername/api/device/9. 
 *PassThru* |  |  | If specified, the output of the update will be deserialized and written to the pipeline. 
 *WhatIf* |  |  |  
 *Confirm* |  |  |  

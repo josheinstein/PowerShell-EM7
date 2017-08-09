@@ -8,7 +8,7 @@ function Get-EM7Device {
     param(
 
         # If specified, retrieves the device with the specified ID
-        [Parameter(ParameterSetName='ID', Position=1, Mandatory=$true)]
+        [Parameter(ParameterSetName='ID', Position=0, Mandatory=$true)]
         [Int32[]]$ID,
 
         # If specified, the keys of this hashtable are prefixed with

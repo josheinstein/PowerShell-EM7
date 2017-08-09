@@ -14,7 +14,7 @@ function Get-EM7DeviceGroup {
     param(
 
         # If specified, retrieves the device group with the specified ID
-        [Parameter(ParameterSetName='ID', Position=1, Mandatory=$true)]
+        [Parameter(ParameterSetName='ID', Position=0, Mandatory=$true)]
         [Int32[]]$ID,
 
         # If specifieed, the keys of this hashtable are prefixed with
@@ -97,19 +97,19 @@ function Get-EM7DeviceGroupMember {
 
         # If specified, retrieves the device group with the specified ID
         [Alias('__DeviceGroupID')]
-        [Parameter(ParameterSetName='ID', Position=1, Mandatory=$true, ValueFromPipelineByPropertyName=$true)]
+        [Parameter(ParameterSetName='ID', Position=0, Mandatory=$true, ValueFromPipelineByPropertyName=$true)]
         [Int32[]]$ID,
-
-        # If specifieed, the keys of this hashtable are prefixed with
-        # 'filter.' and used as filters. For example: @{state='PA'}
-        [Parameter(ParameterSetName='Advanced')]
-        [Hashtable]$Filter,
 
         # If specified, device groups are searched based on the name
         # Wildcards can be used at either end of the name to check for
         # partial matches.
         [Parameter(ParameterSetName='Advanced')]
         [String]$Name,
+
+        # If specifieed, the keys of this hashtable are prefixed with
+        # 'filter.' and used as filters. For example: @{state='PA'}
+        [Parameter(ParameterSetName='Advanced')]
+        [Hashtable]$Filter,
 
         # Limits the results to the specified number. The default is 1000.
         [Parameter()]
@@ -188,7 +188,7 @@ function Add-EM7DeviceGroupMember {
 
         # The name of an existing device group.
         # This must match one and only one device group, otherwise use ID.
-        [Parameter(ParameterSetName='Name', Position=1, Mandatory=$true)]
+        [Parameter(ParameterSetName='Name', Position=0, Mandatory=$true)]
         [String]$Name,
 
         # The ID of an existing device group.
