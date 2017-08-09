@@ -92,33 +92,32 @@ Parameter | Required | Pos  | Description
 *** 
 
 ## Get-EM7DeviceGroup 
-
-Get-EM7DeviceGroup [-Filter &lt;hashtable&gt;] [-Name &lt;string&gt;] [-Limit &lt;int&gt;] [-Offset &lt;int&gt;] [-OrderBy &lt;string&gt;] [-ExpandProperty &lt;string[]&gt;] [&lt;CommonParameters&gt;]
-
-Get-EM7DeviceGroup [-ID] &lt;int[]&gt; [-Limit &lt;int&gt;] [-Offset &lt;int&gt;] [-OrderBy &lt;string&gt;] [-ExpandProperty &lt;string[]&gt;] [&lt;CommonParameters&gt;]
- 
+Gets information about a device group by its name or ID. 
 
 ### Syntax 
-                       syntaxItem                                                                       
-                       ----------                                                                       
-                       {@{name=Get-EM7DeviceGroup; CommonParameters=True; WorkflowCommonParameters=F... 
+
+    Get-EM7DeviceGroup [-Filter <Hashtable>] [-Name <String>] [-Limit <Int32>]  
+                       [-Offset <Int32>] [-OrderBy <String>] [-ExpandProperty <String[]>]  
+                       [<CommonParameters>] 
+
+    Get-EM7DeviceGroup [-ID] <Int32[]> [-Limit <Int32>] [-Offset <Int32>] [-OrderBy  
+                       <String>] [-ExpandProperty <String[]>] [<CommonParameters>] 
+
+### Description 
+Note, that since device groups may contain rules or other device groups,
+this function does not necessarily represent every device included in the
+group implicitly. For that, you should use the Get-EM7DeviceGroupMember
+function. 
 
 Parameter | Required | Pos  | Description 
 --------- | :------: | ---: | ----------- 
-*ExpandProperty* |  |  |  
-*Filter* |  |  |  
-*ID* | X | 1 |  
-*Limit* |  |  |  
-*Name* |  |  |  
-*Offset* |  |  |  
-*OrderBy* |  |  |  
-
-### Inputs 
-None
- 
-
-### Outputs 
-System.Object 
+*ID* | X | 2 | If specified, retrieves the device group with the specified ID 
+*Filter* |  |  | If specifieed, the keys of this hashtable are prefixed with &#39;filter.&#39; and used as filters. For example: @{state=&#39;PA&#39;} 
+*Name* |  |  | If specified, device groups are searched based on the name Wildcards can be used at either end of the name to check for partial matches. 
+*Limit* |  |  | Limits the results to the specified number. The default is 1000. 
+*Offset* |  |  | The starting offset in the results to return. If retrieving objects in pages of 100, you would specify 0 for page 1, 100 for page 2, 200 for page 3, and so on. 
+*OrderBy* |  |  | Optionally sorts the results by this field in ascending order, or if the field is prefixed with a dash (-) in descending order. You can also pipe the output to PowerShell&#39;s Sort-Object cmdlet, but this parameter is processed on the server, which will affect how results are paginated when there are more results than fit in a single page. 
+*ExpandProperty* |  |  | Specifies one or more property names that ordinarily contain a link to a related object to automatically retrieve and place in the  returned object. 
 
 *** 
 

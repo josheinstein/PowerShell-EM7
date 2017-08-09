@@ -1,9 +1,12 @@
 ##############################################################################
 #.SYNOPSIS
-# Gets information about a device group by its name or ID. Note, that since
-# device groups may contain rules or other device groups, this function does
-# not necessarily represent every device included in the group implicitly.
-# For that, you should use the Get-EM7DeviceGroupMember function.
+# Gets information about a device group by its name or ID.
+#
+#.DESCRIPTION
+# Note, that since device groups may contain rules or other device groups,
+# this function does not necessarily represent every device included in the
+# group implicitly. For that, you should use the Get-EM7DeviceGroupMember
+# function.
 ##############################################################################
 function Get-EM7DeviceGroup {
 
