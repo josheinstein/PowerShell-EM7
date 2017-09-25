@@ -106,35 +106,14 @@ function Get-EM7DeviceGroupMember {
         [Parameter(ParameterSetName='Advanced')]
         [String]$Name,
 
-        # If specifieed, the keys of this hashtable are prefixed with
-        # 'filter.' and used as filters. For example: @{state='PA'}
-        [Parameter(ParameterSetName='Advanced')]
-        [Hashtable]$Filter,
-
-        # Limits the results to the specified number. The default is 1000.
-        [Parameter()]
-        [Int32]$Limit = $Globals.DefaultLimit,
-
-        # The starting offset in the results to return.
-        # If retrieving objects in pages of 100, you would specify 0 for page 1,
-        # 100 for page 2, 200 for page 3, and so on.
-        [Parameter()]
-        [Int32]$Offset = 0,
-
-        # Optionally sorts the results by this field in ascending order, or if
-        # the field is prefixed with a dash (-) in descending order.
-        # You can also pipe the output to PowerShell's Sort-Object cmdlet, but
-        # this parameter is processed on the server, which will affect how
-        # results are paginated when there are more results than fit in a
-        # single page.
-        [Parameter()]
-        [String]$OrderBy,
-
         # Specifies one or more property names that ordinarily contain a link
         # to a related object to automatically retrieve and place in the 
         # returned object.
         [Parameter()]
         [String[]]$ExpandProperty,
+
+		# Returns only the Device URIs, and does not retrieve the device details.
+		[Switch]$Quick,
 
         # If specified, device groups that are members of this device group will
         # be recursively expanded as well.
@@ -164,11 +143,16 @@ function Get-EM7DeviceGroupMember {
             $MemberIDs = [Int32[]]($Response -replace '.*/(\d+)$','$1')
 
             if ($MemberIDs) {
-                Get-EM7Object device -ID:$MemberIDs -ExpandProperty:$ExpandProperty
+				if ($Quick) {
+					Write-Output $Response
+				}
+				else {
+					Get-EM7Object device -ID:$MemberIDs -ExpandProperty:$ExpandProperty
+				}
             }
 
             if ($Recurse -and $GroupIDs) {
-                Get-EM7DeviceGroupMember -ID:$GroupIDs -ExpandProperty:$ExpandProperty
+                Get-EM7DeviceGroupMember -ID:$GroupIDs -ExpandProperty:$ExpandProperty -Quick:$Quick
             }
 
         }
@@ -329,3 +313,4 @@ function Add-EM7DeviceGroupMember {
     }
 
 }
+
