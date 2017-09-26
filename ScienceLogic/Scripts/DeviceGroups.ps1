@@ -314,3 +314,70 @@ function Add-EM7DeviceGroupMember {
 
 }
 
+<#
+	.SYNOPSIS
+	Gets the devices groups that the specified device is a member of.
+
+	.DESCRIPTION
+	There is no API operation that returns the device group membership
+	for a given device, so this function must get every device group
+	in the system and index the devices. If there are a large number of
+	devices or device groups in the system, this could potentially be
+	a long process.
+#>
+function Get-EM7DeviceGroupMembership {
+
+    [CmdletBinding()]
+    [OutputType([PSObject])]
+    param (
+
+        # The ID, URL, or object representing the device whose membership to check.
+        [Alias('__DeviceID')]
+		[Parameter(Position = 0, Mandatory = $true, ValueFromPipeline = $true)]
+        [PSObject]$Device
+
+	)
+
+	begin {
+
+		$ProgID = Get-Random -Minimum 100000
+		Write-Progress "Loading device groups..." -Id:$ProgID
+
+		$DeviceGroupCache = @(Get-Em7DeviceGroup -Limit 999999)
+
+		Write-Progress "Done" -Id:$ProgID -Completed
+
+	}
+
+	process {
+
+		$DID = $Null
+
+		# We need a URI.
+		# If Device object was passed in, get its URI.
+		if ($Device.__URI) {
+			$DID = $Device.__URI
+		}
+		elseif ($Device -as [Int32]) {
+			$DID = "/api/device/$Device"
+		}
+		elseif ($Device -match '^/api/device/\d+$') {
+			$DID = $Device
+		}
+		else {
+			Write-Error "Unsupported Device parameter: $Device"
+		}
+
+		if ($DID) {
+
+			$DeviceGroupCache | Where-Object { $_.devices -contains $DID }
+
+		}
+
+	}
+
+	end {
+
+	}
+
+}
