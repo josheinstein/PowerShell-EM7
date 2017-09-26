@@ -95,7 +95,7 @@ function Get-EM7Object {
 		if ($URI.Length) {
 			if ($URI[0] -match $Globals.UriPattern) {
 				$Resource = $Matches.r
-				$ID = $URI.ForEach({if($_ -match $Globals.UriPattern) {$Matches.id}})
+				$ID = $URI -replace $Globals.UriPattern,'$3'
 			}
 		}
 
