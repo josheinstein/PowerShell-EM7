@@ -169,7 +169,7 @@
                     </TableColumnHeader>
                     <TableColumnHeader>
                         <Label>Name</Label>
-                        <Width>25</Width>
+                        <Width>30</Width>
                         <Alignment>left</Alignment>
                     </TableColumnHeader>
                     <TableColumnHeader>
@@ -184,18 +184,23 @@
                     </TableColumnHeader>
                     <TableColumnHeader>
                         <Label>Visibility</Label>
-                        <Width>40</Width>
+                        <Width>30</Width>
                         <Alignment>left</Alignment>
                     </TableColumnHeader>
                     <TableColumnHeader>
-                        <Label>Groups</Label>
-                        <Width>15</Width>
-                        <Alignment>left</Alignment>
+                        <Label>DeviceCount</Label>
+                        <Width>12</Width>
+                        <Alignment>right</Alignment>
                     </TableColumnHeader>
                     <TableColumnHeader>
-                        <Label>Devices</Label>
-                        <Width>15</Width>
-                        <Alignment>left</Alignment>
+                      <Label>GroupCount</Label>
+                      <Width>12</Width>
+                      <Alignment>right</Alignment>
+                    </TableColumnHeader>
+                    <TableColumnHeader>
+                      <Label>ParentCount</Label>
+                      <Width>12</Width>
+                      <Alignment>right</Alignment>
                     </TableColumnHeader>
                 </TableHeaders>
                 <TableRowEntries>
@@ -217,10 +222,13 @@
                                 <PropertyName>visibility</PropertyName>
                             </TableColumnItem>
                             <TableColumnItem>
-                                <ScriptBlock>"Count = $($_.groups.Count)"</ScriptBlock>
+                              <PropertyName>deviceCount</PropertyName>
                             </TableColumnItem>
                             <TableColumnItem>
-                                <ScriptBlock>"Count = $($_.devices.Count)"</ScriptBlock>
+                              <PropertyName>groupCount</PropertyName>
+                            </TableColumnItem>
+                            <TableColumnItem>
+                              <PropertyName>parentCount</PropertyName>
                             </TableColumnItem>
                         </TableColumnItems>
                     </TableRowEntry>
