@@ -15,6 +15,7 @@ $Globals = @{
 	DefaultPageSize = 500
     CredentialPath  = "${ENV:TEMP}\slcred.xml"
     IgnoreSSLErrors = $false
+	UriPattern      = '^(?<t>/api/(?<r>\w+))/(?<id>\d+)$'
 }
 
 if (Test-Path $Globals.CredentialPath) {
