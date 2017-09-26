@@ -56,17 +56,21 @@ function Connect-EM7 {
 function Get-EM7Object {
 
     [Alias('gslo')]
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName="ByURI")]
     param(
+
+		# The URI of a single ScienceLogic object, such as /api/device/1
+		[Parameter(ParameterSetName="ByURI", Position=0, Mandatory=$True, ValueFromPipeline=$true)]
+		[String[]]$URI,
 
         # The name of the resource index to query.
         # See the documentation for value values.
         # Examples include, device, device_group, organization, account...
-        [Parameter(Position=0, Mandatory=$true)]
+        [Parameter(ParameterSetName="ByID", Position=0, Mandatory=$true)]
         [String]$Resource,
 
         # The ID of a specific entity to retrieve.
-        [Parameter(Position=1, Mandatory=$true)]
+        [Parameter(ParameterSetName="ByID", Position=1, Mandatory=$true)]
         [Int32[]]$ID,
 
         # Specifies one or more property names that ordinarily contain a link
@@ -85,18 +89,40 @@ function Get-EM7Object {
 
     process {
 
-        $FindArgs = @{
-            Resource = $Resource
-            ExpandProperty = $ExpandProperty
-            Filter = @{}
-            Limit = $ID.Length
-        }
+		# If URI specified, convert URI into Resource + ID.
+		# All URIs must refer to resources of the same type in a given call.
+		# This is a hack due to a design flaw and I'll correct it later.
+		if ($URI.Length) {
+			if ($URI[0] -match $Globals.UriPattern) {
+				$Resource = $Matches.r
+				$ID = $URI.ForEach({if($_ -match $Globals.UriPattern) {$Matches.id}})
+			}
+		}
 
-        if ($ID) {
-            $FindArgs.Filter['_id.in'] = $ID -join ','
-        }
+		$FindArgs = @{
+			Resource = $Resource
+			ExpandProperty = $ExpandProperty
+			Filter = @{}
+			Limit = $Globals.DefaultPageSize
+		}
 
-        Find-EM7Object @FindArgs
+		$IDQueue = New-Object System.Collections.Generic.Queue[Int32] -ArgumentList (,$ID)
+		$IDBatch = New-Object System.Collections.Generic.List[Int32] -ArgumentList ($Globals.DefaultPageSize)
+
+		do {
+
+			$IDBatch.Clear()
+			for ($i=0;$i -lt $Globals.DefaultPageSize -and $IDQueue.Count;$i++) {
+				$IDBatch.Add($IDQueue.Dequeue())
+			}
+
+			if ($IDBatch.Count) {
+				$FindArgs.Filter['_id.in'] = $IDBatch -join ','
+			}
+
+			Find-EM7Object @FindArgs
+
+		} while ($IDQueue.Count);
 
     }
 
@@ -121,8 +147,8 @@ function Find-EM7Object {
 
         # If specifieed, the keys of this hashtable are prefixed with
         # 'filter.' and used as filters. For example: @{organization=6}
-        [Parameter(ParameterSetName='Advanced')]
-        [Hashtable]$Filter,
+        [Parameter()]
+        [Hashtable]$Filter = @{},
 
         # Limits the results to the specified number. The default is 1000.
         [Parameter()]
@@ -306,9 +332,9 @@ function Set-EM7Object {
 
             if ($PassThru) {
 
-                if ($URI.AbsolutePath -match '^(.*)/([A-Za-z0-9_\-\.]+)$') {
-                    $TypeName = $Matches[1]
-                    $ID = $Matches[2]
+                if ($URI.AbsolutePath -match $Globals.UriPattern) {
+                    $TypeName = $Matches.t
+                    $ID = $Matches.id
                     if ($ID -as [Int32]) { $ID = $ID -as [Int32] }
                     $Result | Add-Member -TypeName $TypeName
                     $Result | Add-Member NoteProperty __ID $ID
