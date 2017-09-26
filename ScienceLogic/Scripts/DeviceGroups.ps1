@@ -10,23 +10,25 @@
 ##############################################################################
 function Get-EM7DeviceGroup {
 
-    [CmdletBinding(DefaultParameterSetName='Advanced')]
+    [CmdletBinding(DefaultParameterSetName='ByID')]
     param(
 
-        # If specified, retrieves the device group with the specified ID
-        [Parameter(ParameterSetName='ID', Position=0, Mandatory=$true)]
-        [Int32[]]$ID,
+        # If specified, retrieves the device group with the specified ID, URI, or Name.
+        # When using name match, wildcards can be used at either end of the name
+		# to check for partial matches.
+        [Alias('Name')]
+		[Parameter(ParameterSetName='ByID', Position=0)]
+        [String]$ID,
+
+        # If specified, retrieves the device groups that are children of the specified
+		# parent device group.
+		[Parameter(ParameterSetName='ByParent', Mandatory=$true)]
+		[String]$Parent,
 
         # If specifieed, the keys of this hashtable are prefixed with
         # 'filter.' and used as filters. For example: @{state='PA'}
-        [Parameter(ParameterSetName='Advanced')]
-        [Hashtable]$Filter,
-
-        # If specified, device groups are searched based on the name
-        # Wildcards can be used at either end of the name to check for
-        # partial matches.
-        [Parameter(ParameterSetName='Advanced')]
-        [String]$Name,
+        [Parameter()]
+        [Hashtable]$Filter = @{},
 
         # Limits the results to the specified number. The default is 1000.
         [Parameter()]
@@ -51,7 +53,14 @@ function Get-EM7DeviceGroup {
         # to a related object to automatically retrieve and place in the 
         # returned object.
         [Parameter()]
-        [String[]]$ExpandProperty
+        [String[]]$ExpandProperty,
+
+		# If specified, the cache will be checked for device group data before
+		# making a call to the server for a given device group id.
+		# This is primarily designed to be used internally, when functions are being called
+		# repeatedly, such as in recursion scenarios, which may result in duplicated lookups.
+		[Parameter()]
+		[Hashtable]$Cache = @{}
 
     )
 
@@ -63,24 +72,47 @@ function Get-EM7DeviceGroup {
 
     process {
 
-        if ($Filter -eq $Null) { $Filter = @{} }
+		if ($PSCmdlet.ParameterSetName -eq 'ByID') {
 
-        if ($Name) {
-            $Operator = ''
-            if ($Name.StartsWith('*') -and $Name.EndsWith('*')) { $Operator = '.contains' }
-            elseif ($Name.StartsWith('*')) { $Operator = '.ends_with' }
-            elseif ($Name.EndsWith('*')) { $Operator = '.begins_with' }
-            $Filter["name$Operator"] = $Name.Trim('*')
-        }
+			if ($ID) {
+				if ($ID -as [Int32]) {
+					# Treat it as an ID #
+					Get-EM7Object device_group -ID:$ID -ExpandProperty:$ExpandProperty
+					Return
+				}
+				elseif ($ID -match $Globals.UriPattern -and $Matches.r -eq 'device_group') {
+					# Treat it as a URI
+					$DeviceGroup = $Cache[$ID]
+					if (!$DeviceGroup) {
+						$DeviceGroup = Get-EM7Object -URI:$ID -ExpandProperty:$ExpandProperty
+						$Cache[$ID] = $DeviceGroup
+					}
+					if ($DeviceGroup) { $DeviceGroup }
+					Return
+				}
+				else {
+					# Treat it as a name
+					$Operator = ''
+					if ($ID.StartsWith('*') -and $ID.EndsWith('*')) { $Operator = '.contains' }
+					elseif ($ID.StartsWith('*')) { $Operator = '.ends_with' }
+					elseif ($ID.EndsWith('*')) { $Operator = '.begins_with' }
+					$Filter["name$Operator"] = $ID.Trim('*')
+				}
+			}
 
-        switch ($PSCmdlet.ParameterSetName) {
-            'ID' {
-                Get-EM7Object device_group -ID:$ID -ExpandProperty:$ExpandProperty
-            }
-            'Advanced' {
-                Find-EM7Object device_group -Filter:$Filter -Limit:$Limit -Offset:$Offset -OrderBy:$OrderBy -ExpandProperty:$ExpandProperty
-            }
-        }
+			Find-EM7Object device_group -Filter:$Filter -Limit:$Limit -Offset:$Offset -OrderBy:$OrderBy -ExpandProperty:$ExpandProperty |
+			ForEach-Object { $Cache[$_.__URI] = $_; $_ } |
+			Sort-Object Name
+
+		}
+		elseif ($PSCmdlet.ParameterSetName -eq 'ByParent') {
+
+			$ParentGroups = @(Get-EM7DeviceGroup -ID:$Parent -Filter @{'group_count.min'=1} -Cache:$Cache)
+			Get-EM7Object -URI:$ParentGroups.groups -ExpandProperty:$ExpandProperty |
+			ForEach-Object { $Cache[$_.__URI] = $_; $_ } |
+			Sort-Object Name
+
+		}
 
     }
 
@@ -92,19 +124,15 @@ function Get-EM7DeviceGroup {
 ##############################################################################
 function Get-EM7DeviceGroupMember {
 
-    [CmdletBinding(DefaultParameterSetName='Advanced')]
+    [CmdletBinding()]
     param(
 
-        # If specified, retrieves the device group with the specified ID
-        [Alias('__DeviceGroupID')]
-        [Parameter(ParameterSetName='ID', Position=0, Mandatory=$true, ValueFromPipelineByPropertyName=$true)]
-        [Int32[]]$ID,
-
-        # If specified, device groups are searched based on the name
-        # Wildcards can be used at either end of the name to check for
-        # partial matches.
-        [Parameter(ParameterSetName='Advanced')]
-        [String]$Name,
+        # The device group ID, URI, or Name.
+        # When using name match, wildcards can be used at either end of the name
+		# to check for partial matches.
+        [Alias('Name', '__DeviceGroupID')]
+        [Parameter(Position=0, Mandatory=$true, ValueFromPipelineByPropertyName=$true)]
+        [String]$ID,
 
         # Specifies one or more property names that ordinarily contain a link
         # to a related object to automatically retrieve and place in the 
@@ -118,7 +146,14 @@ function Get-EM7DeviceGroupMember {
         # If specified, device groups that are members of this device group will
         # be recursively expanded as well.
         [Parameter()]
-        [Switch]$Recurse
+        [Switch]$Recurse,
+
+		# If specified, the cache will be checked for device group membership data before
+		# making a call to the server for a given device group id.
+		# This is primarily designed to be used internally, when functions are being called
+		# repeatedly, such as in recursion scenarios, which may result in duplicated lookups.
+		[Parameter()]
+		[Hashtable]$Cache = @{}
 
     )
 
@@ -130,29 +165,30 @@ function Get-EM7DeviceGroupMember {
 
     process {
 
-        $DeviceGroups = @()
-        if ($ID)   { $DeviceGroups += @(Get-EM7DeviceGroup -ID:$ID) }
-        if ($Name) { $DeviceGroups += @(Get-EM7DeviceGroup -Name:$Name) }
+	    $DeviceGroups = @(Get-EM7DeviceGroup -ID:$ID -Cache:$Cache)
 
         foreach ($DeviceGroup in $DeviceGroups) {
 
             $URI = CreateUri "device_group/$($DeviceGroup.__ID)/expanded_devices"
-            $Response = HttpInvoke $URI
+            $DeviceIDs = $Cache[$URI.AbsolutePath]
+			if (!$DeviceIDs) {
+				$DeviceIDs = HttpInvoke $URI
+				$Cache[$URI.AbsolutePath] = $DeviceIDs
+			}
             
-            $GroupIDs = [Int32[]]($DeviceGroup.groups -replace '.*/(\d+)$','$1')
-            $MemberIDs = [Int32[]]($Response -replace '.*/(\d+)$','$1')
-
-            if ($MemberIDs) {
+            if ($DeviceIDs.Length) {
 				if ($Quick) {
-					Write-Output $Response
+					Write-Output $DeviceIDs
 				}
 				else {
-					Get-EM7Object device -ID:$MemberIDs -ExpandProperty:$ExpandProperty
+					Get-EM7Object -URI:$DeviceIDs -ExpandProperty:$ExpandProperty
 				}
             }
 
-            if ($Recurse -and $GroupIDs) {
-                Get-EM7DeviceGroupMember -ID:$GroupIDs -ExpandProperty:$ExpandProperty -Quick:$Quick
+            if ($Recurse) {
+				foreach ($GroupID in $DeviceGroup.groups) {
+					Get-EM7DeviceGroupMember -ID:$GroupID -ExpandProperty:$ExpandProperty -Quick:$Quick -Recurse:$Recurse -Cache:$Cache
+				}
             }
 
         }
@@ -167,17 +203,14 @@ function Get-EM7DeviceGroupMember {
 ##############################################################################
 function Add-EM7DeviceGroupMember {
 
-    [CmdletBinding(DefaultParameterSetName='Name', SupportsShouldProcess=$true)]
+    [CmdletBinding(SupportsShouldProcess=$true)]
     param(
 
         # The name of an existing device group.
         # This must match one and only one device group, otherwise use ID.
-        [Parameter(ParameterSetName='Name', Position=0, Mandatory=$true)]
-        [String]$Name,
-
-        # The ID of an existing device group.
-        [Parameter(ParameterSetName='ID', Mandatory=$true)]
-        [Int32]$ID,
+        [Alias('ID', 'Name')]
+		[Parameter(Position=0, Mandatory=$true)]
+        [String]$Group,
 
         # A device piped from the output of another command (such as Get-EM7Device).
         # This property must be a device and have a corresponding device URI.
@@ -193,16 +226,10 @@ function Add-EM7DeviceGroupMember {
         $AddedIDs = @()
         $AddedDevices = @()
 
-        $DeviceGroup = $Null
+        $DeviceGroup = Get-EM7DeviceGroup -ID:$Group -Limit 2
         $DeviceGroupName = $Null
         $DeviceGroupID = $Null
         $DeviceGroupURI = $Null
-
-        # The device group to add devices to can be supplied by ID or name
-        # Use the appropriate command to get the device group object
-
-        if ($ID) { $DeviceGroup = Get-EM7Object -Resource device_group -ID $ID -ErrorAction 0 }
-        elseif ($Name) { $DeviceGroup = Find-EM7Object -Resource device_group -Filter @{name=$Name} -Limit 2 }
 
         if ($DeviceGroup -eq $Null -or $DeviceGroup.Count -eq 0) {
             # They specified a device group id or name and no matching
@@ -244,7 +271,7 @@ function Add-EM7DeviceGroupMember {
 
                 # If a device object was used as input instead of a URI or ID,
                 # make sure we extract its __URI
-                if ($DID -is [PSObject]) {
+                if ($DID.__URI) {
                     $DID = $DID.__URI
                 }
 
@@ -343,7 +370,12 @@ function Get-EM7DeviceGroupMembership {
 		$ProgID = Get-Random -Minimum 100000
 		Write-Progress "Loading device groups..." -Id:$ProgID
 
-		$DeviceGroupCache = @(Get-Em7DeviceGroup -Limit 999999)
+		$Cache = @{}
+		$DeviceGroupCache = @(Get-Em7DeviceGroup -Limit 999999 -Cache:$Cache)
+		foreach ($DeviceGroup in $DeviceGroupCache) {
+			$DeviceGroup.devices = @(Get-EM7DeviceGroupMember -ID $DeviceGroup.__URI -Recurse -Quick -Cache:$Cache)
+			$DeviceGroup.deviceCount = $DeviceGroup.devices.Count
+		}
 
 		Write-Progress "Done" -Id:$ProgID -Completed
 
@@ -361,7 +393,7 @@ function Get-EM7DeviceGroupMembership {
 		elseif ($Device -as [Int32]) {
 			$DID = "/api/device/$Device"
 		}
-		elseif ($Device -match '^/api/device/\d+$') {
+		elseif ($Device -match $Globals.UriPattern -and $Matches.t -eq 'device') {
 			$DID = $Device
 		}
 		else {
