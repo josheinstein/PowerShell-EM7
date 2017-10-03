@@ -12,6 +12,10 @@ function Connect-EM7 {
         [Parameter(Position=0, Mandatory=$true)]
         [Uri]$URI,
 
+		# The credentials to use when calling the API.
+		[Parameter(Mandatory=$true)]
+		[PSCredential]$Credential,
+
         # Specify this when you'll be using a HTTP debugger like Fiddler.
         # It will cause the JSON to be formatted with whitespace for easier
         # reading, but is more likely to result in errors with larger responses.
@@ -38,7 +42,7 @@ function Connect-EM7 {
 
     $Globals.ApiRoot = $URI
     $Globals.FormatResponse = $Formatted.IsPresent
-    $Globals.Credentials = Get-Credential -Message 'Enter your ScienceLogic API credentials.'
+    $Globals.Credentials = $Credential
     $Globals.Credentials | Add-Member NoteProperty URI $URI
     $Globals.Credentials | Add-Member NoteProperty FormatResponse $Formatted.IsPresent
 
