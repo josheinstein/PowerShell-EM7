@@ -207,7 +207,7 @@ function ExpandProperty {
             # First check the cache
             if (!$Cache[$U]) {
                 # Not there? Go get it.
-                $Cache[$U] = HttpInvoke (%New-Uri $U -BaseUri $Globals.ApiRoot -QueryString @{extended_fetch=1}) | UnrollArray
+                $Cache[$U] = HttpInvoke (%New-Uri $U -BaseUri $Globals.ApiRoot -QueryString @{extended_fetch=1;limit=10}) | UnrollArray
             }
 
             if ($URI -is [Array]) {
