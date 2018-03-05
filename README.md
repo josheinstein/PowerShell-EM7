@@ -207,3 +207,15 @@ Parameter | Required | Pos  | Description
 
 *** 
 
+## Submit-EM7Alert
+Accepts a device as input parameter and adds the message to it.
+
+### Syntax
+
+    Submit-EM7Alert -Device <PSObject> -Message <string> [WhatIf]
+	                [-Confirm] [<CommonParameters>]
+
+Parameter | Required | Pos  | Description
+--------- | :------: | ---: | -----------
+*Device* | X | 0 | An EM7 device as PSObject
+*Message | X | 1 | The message to append in the device log.
