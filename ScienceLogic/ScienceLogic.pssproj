@@ -34,6 +34,7 @@
   <ItemGroup>
     <Compile Include="ScienceLogic.psd1" />
     <Compile Include="ScienceLogic.psm1" />
+    <Compile Include="Scripts\Alerts.ps1" />
     <Compile Include="Scripts\Core.ps1" />
     <Compile Include="Scripts\DeviceGroups.ps1" />
     <Compile Include="Scripts\Devices.ps1" />

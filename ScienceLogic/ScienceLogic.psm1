@@ -29,3 +29,4 @@ if (Test-Path $Globals.CredentialPath) {
 . $PSScriptRoot\Scripts\Organizations.ps1
 . $PSScriptRoot\Scripts\Devices.ps1
 . $PSScriptRoot\Scripts\DeviceGroups.ps1
+. $PSScriptRoot\Scripts\Alerts.ps1
