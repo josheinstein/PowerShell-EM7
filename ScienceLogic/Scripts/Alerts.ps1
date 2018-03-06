@@ -42,9 +42,8 @@ Function Submit-EM7Alert {
             $URI = CreateUri -Resource 'alert'
             $Response = HttpInvoke $URI -Method 'POST' -PostData "{""aligned_resource"":""$($Device.__URI)"",""message_time"":""0"",""message"":""$($Message)""}"
 			$Response | Add-Member -TypeName 'alert'
-			$Response | add-member -NotePropertyName 'Time' -NotePropertyValue ([DateTime]"1970-01-01").AddSeconds($Response.message_time)
+			$Response | Add-Member -NotePropertyName 'Time' -NotePropertyValue (([DateTime]"1970-01-01").AddSeconds($Response.message_time)).ToLocalTime()
 			if ($PassThru) { $Response }
-            #$Globals.Add('HideFilterInfo',$fi)
 
         }
 	}
