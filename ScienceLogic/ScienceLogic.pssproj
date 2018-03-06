@@ -28,6 +28,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Folder Include="Formats\" />
+    <Folder Include="Tests\" />
     <Folder Include="Scripts\" />
     <Folder Include="Types\" />
   </ItemGroup>
@@ -40,6 +41,7 @@
     <Compile Include="Scripts\Devices.ps1" />
     <Compile Include="Scripts\Internal.ps1" />
     <Compile Include="Scripts\Organizations.ps1" />
+    <Compile Include="Tests\Test-Alarm.ps1" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Formats\ScienceLogic.Formats.ps1xml" />

@@ -26,9 +26,12 @@ Function Submit-EM7Alert {
         [ValidateScript({if ($_.__URI -ne $null) { $true } else { throw "Passed PSObject $_ is not a EM7 device"; $false} })]
         [PSObject]$Device,
 
-		[Parameter(Mandatory=$true, Position=1, ValueFromPipeline=$true)]
+		[Parameter(Mandatory=$true, Position=1, ValueFromPipeline=$false)]
 		[ValidateNotNullOrEmpty()]
-		[String]$Message
+		[String]$Message,
+
+		[Parameter(Mandatory=$False)]
+		[Switch]$PassThru
 	)
 	Begin {
         EnsureConnected -ErrorAction Stop
@@ -36,11 +39,12 @@ Function Submit-EM7Alert {
 
 	Process {
 		if ($PSCmdlet.ShouldProcess("EM7","message '$($Message)' will be sent to $($Device.Name)") ) {
-            $fi = $globals.HideFilterInfo
-            $Globals.Remove('HideFilterInfo')
             $URI = CreateUri -Resource 'alert'
-            $Reponse = HttpInvoke $URI -Method 'POST' -PostData "{""aligned_resource"":""$($Device.__URI)"",""message_time"":""0"",""message"":""$($Message)""}"
-            $Globals.Add('HideFilterInfo',$fi)
+            $Response = HttpInvoke $URI -Method 'POST' -PostData "{""aligned_resource"":""$($Device.__URI)"",""message_time"":""0"",""message"":""$($Message)""}"
+			$Response | Add-Member -TypeName 'alert'
+			$Response | add-member -NotePropertyName 'Time' -NotePropertyValue ([DateTime]"1970-01-01").AddSeconds($Response.message_time)
+			if ($PassThru) { $Response }
+            #$Globals.Add('HideFilterInfo',$fi)
 
         }
 	}
