@@ -6,13 +6,13 @@
             <ScriptProperty>
                 <Name>DateAdded</Name>
                 <GetScriptBlock>
-                    (([DateTime]"1970-01-01").AddSeconds($This.date_added)).ToLocalTime()
+                    ([datetimeoffset]::FromUnixTimeSeconds($This.date_added)).LocalDateTime
                 </GetScriptBlock>
             </ScriptProperty>
             <ScriptProperty>
                 <Name>LastPolled</Name>
                 <GetScriptBlock>
-                  (([DateTime]"1970-01-01").AddSeconds($This.last_poll)).ToLocalTime()
+                  ([datetimeoffset]::FromUnixTimeSeconds($This.last_poll)).LocalDateTime
                 </GetScriptBlock>
             </ScriptProperty>
             <AliasProperty>
@@ -27,13 +27,13 @@
             <ScriptProperty>
                 <Name>DateCreated</Name>
                 <GetScriptBlock>
-                  (([DateTime]"1970-01-01").AddSeconds($This.date_create)).ToLocalTime()
+                  ([datetimeoffset]::FromUnixTimeSeconds($This.date_create)).LocalDateTime
                 </GetScriptBlock>
             </ScriptProperty>
             <ScriptProperty>
                 <Name>DateModified</Name>
                 <GetScriptBlock>
-                  (([DateTime]"1970-01-01").AddSeconds($This.date_edit)).ToLocalTime()
+                  ([datetimeoffset]::FromUnixTimeSeconds($This.date_edit)).LocalDateTime
                 </GetScriptBlock>
             </ScriptProperty>
             <AliasProperty>

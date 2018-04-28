@@ -8,6 +8,8 @@
     <RootNamespace>MyApplication</RootNamespace>
     <AssemblyName>MyApplication</AssemblyName>
     <Name>ScienceLogic</Name>
+    <PackageEntryPoint>Realdolmen\monitoring.ps1</PackageEntryPoint>
+    <DotNetVersion>v4.0</DotNetVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>

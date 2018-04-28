@@ -36,7 +36,7 @@
                     </TableColumnHeader>
                     <TableColumnHeader>
                         <Label>Class</Label>
-                        <Width>15</Width>
+                        <Width>50</Width>
                         <Alignment>left</Alignment>
                     </TableColumnHeader>
                     <TableColumnHeader>
@@ -58,13 +58,13 @@
                                 <PropertyName>ip</PropertyName>
                             </TableColumnItem>
                             <TableColumnItem>
-                                <ScriptBlock>$(if ($_.organization.company) { $_.organization.company } else { $_.organization })</ScriptBlock>
+                                <ScriptBlock>(get-em7Object -Resource 'organization' -Id ($_.organization -split '/')[-1]).Company</ScriptBlock>
                             </TableColumnItem>
                             <TableColumnItem>
-                                <ScriptBlock>$_.class_type.device_category.cat_name</ScriptBlock>
+                                <ScriptBlock>(get-em7object -Resource 'device_category' -Id ((get-em7object -Resource 'device_class' -Id ($_.class_type -split '/')[-1]).device_category -split '/')[-1]).cat_name</ScriptBlock>
                             </TableColumnItem>
                             <TableColumnItem>
-                                <ScriptBlock>"$($_.class_type.class) | $($_.class_type.description)"</ScriptBlock>
+                                <ScriptBlock>(Get-EM7Object -Resource 'device_class' -ID ($_.class_type -split '/')[-1] | select-object @{n='Class'; e={ "$($_.class) | $($_.description)"}}).Class</ScriptBlock>
                             </TableColumnItem>
                             <TableColumnItem>
                                 <ScriptBlock>

@@ -35,7 +35,43 @@ function Connect-EM7 {
 
     $Globals.IgnoreSSLErrors = $IgnoreSSLErrors.IsPresent
     if ($IgnoreSSLErrors) {
-        [Net.ServicePointManager]::ServerCertificateValidationCallback = {$true}
+		try {
+			Add-Type @"
+    			using System;
+    			using System.Net;
+    			using System.Net.Security;
+    			using System.Security.Cryptography.X509Certificates;
+    			public class ServerCertificateValidationCallback
+    			{
+        			public static void BypassSSLCheck()
+        			{
+						ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
+            			ServicePointManager.ServerCertificateValidationCallback += 
+                			delegate
+                			(
+                    			Object obj, 
+                    			X509Certificate certificate, 
+                    			X509Chain chain, 
+                    			SslPolicyErrors errors
+                			)
+                			{ return true; };
+        			}
+					public static void ForceSSLCheck()
+					{
+						ServicePointManager.SecurityProtocol = SecurityProtocolType.SystemDefault;
+						ServicePointManager.ServerCertificateValidationCallback = null;
+					}
+
+    			}
+"@
+		}
+		catch [System.Exception]
+		{
+
+		}
+
+		# Invoke the above type. This will ensure all invalid certificate errors don't pose any problems
+		[ServerCertificateValidationCallback]::BypassSSLCheck();
     }
 
     if (Test-Path $Globals.CredentialPath) { Remove-Item $Globals.CredentialPath }

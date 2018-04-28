@@ -23,12 +23,15 @@ Function Submit-EM7Alert {
 	[CmdletBinding(SupportsShouldProcess=$true)]
 	Param(
         [Parameter(Mandatory=$true,Position=0, ValueFromPipeLine=$true)]
-        [ValidateScript({if ($_.__URI -ne $null) { $true } else { throw "Passed PSObject $_ is not a EM7 device"; $false} })]
-        [PSObject]$Device,
+        [pstypename('/api/device')]$Device,
 
 		[Parameter(Mandatory=$true, Position=1, ValueFromPipeline=$false)]
 		[ValidateNotNullOrEmpty()]
 		[String]$Message,
+
+		[Parameter(Mandatory=$false, Position=2, ValueFromPipeline=$false)]
+		[ValidateNotNullOrEmpty()]
+		[Datetime]$MessageTime,
 
 		[Parameter(Mandatory=$False)]
 		[Switch]$PassThru
