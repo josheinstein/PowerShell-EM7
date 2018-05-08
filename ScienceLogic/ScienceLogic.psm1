@@ -4,6 +4,7 @@
 #
 # AUTHOR
 # Josh Einstein
+# Tom Robijns
 ##############################################################################
 
 $Globals = @{
@@ -19,7 +20,7 @@ $Globals = @{
 }
 
 if (Test-Path $Globals.CredentialPath) {
-    $Globals.Credentials = Import-Clixml $Globals.CredentialPath -ErrorAction 0
+    $Globals.Credentials = Import-Clixml $Globals.CredentialPath -ErrorAction SilentlyContinue
     $Globals.ApiRoot = $Globals.Credentials.URI
 	$Globals.FormatResponse = $Globals.Credentials.FormatResponse
 }
@@ -29,3 +30,6 @@ if (Test-Path $Globals.CredentialPath) {
 . $PSScriptRoot\Scripts\Organizations.ps1
 . $PSScriptRoot\Scripts\Devices.ps1
 . $PSScriptRoot\Scripts\DeviceGroups.ps1
+. $PSScriptRoot\Scripts\Alerts.ps1
+
+Export-ModuleMember -Function @('Connect-EM7', 'Get-EM7Device', 'Get-EM7DeviceGroup','Get-EM7DeviceGroupMember','Get-EM7DeviceGroupMembership', 'Submit-EM7Alert', 'Add-EM7DeviceGroupMember', 'Get-EM7Object' )
