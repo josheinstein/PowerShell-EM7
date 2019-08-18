@@ -18,6 +18,12 @@ $Globals = @{
 	UriPattern      = '^(?<t>/api/(?<r>\w+))/(?<id>\d+)$'
 }
 
+$EM7Cache = @{
+	organization = @{}
+	device_class = @{}
+	device_category = @{}
+}
+
 if (Test-Path $Globals.CredentialPath) {
     $Globals.Credentials = Import-Clixml $Globals.CredentialPath -ErrorAction 0
     $Globals.ApiRoot = $Globals.Credentials.URI
@@ -29,3 +35,5 @@ if (Test-Path $Globals.CredentialPath) {
 . $PSScriptRoot\Scripts\Organizations.ps1
 . $PSScriptRoot\Scripts\Devices.ps1
 . $PSScriptRoot\Scripts\DeviceGroups.ps1
+
+Export-ModuleMember -Variable EM7Cache

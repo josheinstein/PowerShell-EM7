@@ -462,3 +462,26 @@ function Add-EM7Object {
     }
 
 }
+
+#.SYNOPSIS
+# Reloads the in-memory cache of various lookup dictionaries such as organizations, device classes,
+# etc. which spare us multiple calls to the server to display related information.
+function Update-EM7Cache {
+
+	foreach ($R in ('organization', 'device_category')) {
+		$EM7Cache[$R] = @{}
+		foreach ($O in @(HttpInvoke "$($Globals.ApiRoot)${R}?limit=999999&hide_filterinfo=1")) {
+			$EM7Cache[$R][$O.URI] = $O.description
+		}
+	}
+
+	# extended fetch
+	foreach ($R in ('device_class')) {
+		$EM7Cache[$R] = @{}
+		$Results = HttpInvoke "$($Globals.ApiRoot)${R}?limit=999999&extended_fetch=1&hide_filterinfo=1"
+		foreach ($K in $Results.PSObject.Properties.Name) {
+			$EM7Cache[$R][$K] = $Results.$K
+		}
+	}
+
+}
